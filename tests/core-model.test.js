@@ -2,8 +2,15 @@ import assert from "node:assert/strict";
 import {
   CoreRepository,
   DATA_CONTRACT,
+  DRE_GROUP_VALUES,
+  CALCULATION_INPUT_CONTRACT,
   toIngestionRecord,
   toCalculationRecord,
+  CALCULATION_CONTRACT,
+  DEFAULT_ACCOUNTANT_WARNING,
+  createFiscalRuleSet,
+  createDreLineInput,
+  calculateDreAndTaxSupport,
 } from "../src/index.js";
 
 function run() {
@@ -75,6 +82,9 @@ function run() {
   assert.equal(monthState?.status, "closed", "month state should persist without login dependency");
 
   assert.equal(DATA_CONTRACT.version, "1.0.0");
+  assert.equal(Array.isArray(DRE_GROUP_VALUES), true);
+  assert.equal(typeof CALCULATION_INPUT_CONTRACT.fiscalRule.version, "string");
+  assert.equal(CALCULATION_CONTRACT.version, "1.0.0");
 
   const ingestionRecord = toIngestionRecord(entryA);
   assert.deepEqual(ingestionRecord, {
@@ -95,6 +105,74 @@ function run() {
     classification: "company",
     amount: 199.9,
   });
+
+  const fiscalRule = createFiscalRuleSet({
+    version: "simples-v2026.05",
+    effectiveRate: 6,
+  });
+
+  const dreLines = [
+    createDreLineInput({
+      entryId: "line-03",
+      companyId: "cmp-alpha",
+      month: "2026-05",
+      amount: 50,
+      dreGroup: "financial_income",
+      description: "Bank yield",
+    }),
+    createDreLineInput({
+      entryId: "line-01",
+      companyId: "cmp-alpha",
+      month: "2026-05",
+      amount: 1000,
+      dreGroup: "revenue",
+      description: "Service invoice",
+    }),
+    createDreLineInput({
+      entryId: "line-02",
+      companyId: "cmp-alpha",
+      month: "2026-05",
+      amount: 100,
+      dreGroup: "deductions",
+      description: "Discounts",
+    }),
+    createDreLineInput({
+      entryId: "line-04",
+      companyId: "cmp-alpha",
+      month: "2026-05",
+      amount: 400,
+      dreGroup: "expenses",
+      description: "Operating costs",
+    }),
+  ];
+
+  const firstCalc = calculateDreAndTaxSupport({
+    companyId: "cmp-alpha",
+    month: "2026-05",
+    lines: dreLines,
+    fiscalRule,
+  });
+
+  const secondCalc = calculateDreAndTaxSupport({
+    companyId: "cmp-alpha",
+    month: "2026-05",
+    lines: [...dreLines].reverse(),
+    fiscalRule,
+  });
+
+  assert.deepEqual(firstCalc, secondCalc, "calculation output must be deterministic");
+  assert.equal(firstCalc.dre.groups.revenue, 1000);
+  assert.equal(firstCalc.dre.groups.deductions, 100);
+  assert.equal(firstCalc.dre.groups.expenses, 400);
+  assert.equal(firstCalc.dre.groups.financialIncome, 50);
+  assert.equal(firstCalc.dre.operatingResult, 550);
+  assert.equal(firstCalc.fiscalRuleVersion, "simples-v2026.05");
+  assert.equal(
+    firstCalc.taxSupport.accountantValidationWarning,
+    DEFAULT_ACCOUNTANT_WARNING
+  );
+  assert.equal(firstCalc.taxSupport.calculationBase, 900);
+  assert.equal(firstCalc.taxSupport.estimatedTax, 54);
 
   console.log("Task 1.2 validation passed.");
 }

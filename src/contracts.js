@@ -1,5 +1,12 @@
 import { MONTH_STATUS_VALUES, COST_TYPE_VALUES } from "./domain.js";
 
+const DRE_GROUP_VALUES = [
+  "revenue",
+  "deductions",
+  "expenses",
+  "financial_income",
+];
+
 const DATA_CONTRACT = {
   version: "1.0.0",
   entities: {
@@ -30,6 +37,23 @@ const DATA_CONTRACT = {
   },
 };
 
+const CALCULATION_INPUT_CONTRACT = {
+  fiscalRule: {
+    version: "string",
+    regime: "string",
+    effectiveRate: "number | null",
+    accountantValidationWarning: "string",
+  },
+  dreLine: {
+    entryId: "string",
+    companyId: "string",
+    month: "YYYY-MM",
+    amount: "number",
+    dreGroup: DRE_GROUP_VALUES,
+    description: "string",
+  },
+};
+
 function toIngestionRecord(entry) {
   return {
     record_type: "launch_entry",
@@ -42,14 +66,34 @@ function toIngestionRecord(entry) {
   };
 }
 
-function toCalculationRecord(entry) {
-  return {
+function toCalculationRecord(entry, options = {}) {
+  const record = {
     entryId: entry.id,
     companyId: entry.companyId,
     month: entry.month,
     classification: entry.costType,
     amount: entry.amount,
   };
+
+  if (options.dreGroup !== undefined) {
+    if (!DRE_GROUP_VALUES.includes(options.dreGroup)) {
+      throw new Error(`Unknown DRE group '${options.dreGroup}'.`);
+    }
+
+    record.dreGroup = options.dreGroup;
+  }
+
+  if (options.description !== undefined) {
+    record.description = options.description;
+  }
+
+  return record;
 }
 
-export { DATA_CONTRACT, toIngestionRecord, toCalculationRecord };
+export {
+  DATA_CONTRACT,
+  DRE_GROUP_VALUES,
+  CALCULATION_INPUT_CONTRACT,
+  toIngestionRecord,
+  toCalculationRecord,
+};
