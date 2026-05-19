@@ -11,15 +11,15 @@ title: EmpresaFacil
 | Task | Status | Agent | Branch |
 |------|--------|-------|--------|
 | 1.1 | Done | ux-ui-agent | |
-| 1.2 | Active | application-agent | feat/core-data-model-multi-company |
-| 1.3 | Waiting: 1.2 | calculation-agent | |
+| 1.2 | Done | application-agent | |
+| 1.3 | Active | calculation-agent | feat/dre-tax-calculation-contract |
 
 ## Worker Tracking
 
 | Agent | Instance | Notes |
 |-------|----------|-------|
 | ux-ui-agent | 1 | Initialized |
-| application-agent | 0 | Uninitialized |
+| application-agent | 1 | Initialized |
 | calculation-agent | 0 | Uninitialized |
 
 ## Version Control
