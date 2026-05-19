@@ -1,4 +1,5 @@
 import ScreenContainer from '../components/ScreenContainer'
+import { Card, Button } from '../components/ui'
 import styles from './Dashboard.module.css'
 
 const indicators = [
@@ -10,12 +11,15 @@ const indicators = [
 export default function Dashboard() {
   return (
     <ScreenContainer title="Dashboard">
+      <div className={styles.actions}>
+        <Button size="sm" variant="outline">Registrar lançamento</Button>
+      </div>
       <div className={styles.indicators}>
         {indicators.map(({ label, value }) => (
-          <div key={label} className={styles.indicator}>
+          <Card key={label} className={styles.indicator} padding="regular">
             <span className={styles.indicatorLabel}>{label}</span>
             <span className={styles.indicatorValue}>{value}</span>
-          </div>
+          </Card>
         ))}
       </div>
     </ScreenContainer>
