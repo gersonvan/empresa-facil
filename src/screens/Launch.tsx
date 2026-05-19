@@ -1,18 +1,180 @@
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ScreenContainer from '../components/ScreenContainer'
+import { createLaunchEntry } from '../domain'
+import { toIngestionRecord } from '../contracts'
 import { Button, Card, Input } from '../components/ui'
-import styles from './Placeholder.module.css'
+import styles from './Launch.module.css'
+
+type CostType = 'company' | 'personal'
+
+interface LaunchFormState {
+  costType: CostType
+  description: string
+  amount: string
+  notes: string
+}
+
+interface ValidationErrors {
+  description?: string
+  amount?: string
+}
+
+const DEFAULT_COMPANY_ID = 'company-main'
+
+function monthFromNow() {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  return `${now.getFullYear()}-${month}`
+}
+
+function parseBrazilianAmount(rawValue: string) {
+  return Number(rawValue.replace(',', '.'))
+}
+
+function nextEntryId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `launch-${Date.now()}`
+}
 
 export default function Launch() {
+  const [searchParams] = useSearchParams()
+  const initialIntent = searchParams.get('intent') === 'personal' ? 'personal' : 'company'
+
+  const [form, setForm] = useState<LaunchFormState>({
+    costType: initialIntent,
+    description: '',
+    amount: '',
+    notes: '',
+  })
+  const [errors, setErrors] = useState<ValidationErrors>({})
+  const [savedEntryId, setSavedEntryId] = useState<string | null>(null)
+
+  const currentMonth = useMemo(() => monthFromNow(), [])
+
+  function validate(nextState: LaunchFormState) {
+    const validationErrors: ValidationErrors = {}
+
+    if (!nextState.description.trim()) {
+      validationErrors.description = 'Informe uma descrição curta.'
+    }
+
+    const parsedAmount = parseBrazilianAmount(nextState.amount)
+    if (!nextState.amount.trim() || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      validationErrors.amount = 'Informe um valor maior que zero.'
+    }
+
+    return validationErrors
+  }
+
+  function submitForm(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const validationErrors = validate(form)
+    setErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) {
+      return
+    }
+
+    const entry = createLaunchEntry({
+      id: nextEntryId(),
+      companyId: DEFAULT_COMPANY_ID,
+      month: currentMonth,
+      costType: form.costType,
+      description: form.description,
+      amount: parseBrazilianAmount(form.amount),
+    })
+
+    // Keep payload compatibility visible in UI for manual and import parity.
+    const ingestionRecord = toIngestionRecord(entry)
+    setSavedEntryId(String(ingestionRecord.source_id))
+
+    setForm((prevState) => ({
+      ...prevState,
+      description: '',
+      amount: '',
+      notes: '',
+    }))
+  }
+
   return (
     <ScreenContainer title="Lançar">
       <Card className={styles.formCard}>
-        <div className={styles.formGrid}>
-          <Input label="Descrição" placeholder="Ex.: aluguel do escritório" helperText="Use um nome curto e direto." />
-          <Input label="Valor" type="number" inputMode="decimal" placeholder="0,00" />
-          <Button variant="primary" fullWidth>
-            Salvar rascunho
-          </Button>
-        </div>
+        <form className={styles.formGrid} onSubmit={submitForm}>
+          <section className={styles.step} aria-label="Passo 1 de 3">
+            <h2 className={styles.stepTitle}>1. Para quem é este lançamento?</h2>
+            <p className={styles.stepHint}>Escolha apenas uma intenção para manter o cadastro rápido.</p>
+            <div className={styles.intentOptions} role="group" aria-label="Tipo de lançamento">
+              <button
+                type="button"
+                className={`${styles.intentButton} ${form.costType === 'company' ? styles.intentActive : ''}`}
+                onClick={() => setForm((prevState) => ({ ...prevState, costType: 'company' }))}
+                aria-pressed={form.costType === 'company'}
+              >
+                Empresa
+              </button>
+              <button
+                type="button"
+                className={`${styles.intentButton} ${form.costType === 'personal' ? styles.intentActive : ''}`}
+                onClick={() => setForm((prevState) => ({ ...prevState, costType: 'personal' }))}
+                aria-pressed={form.costType === 'personal'}
+              >
+                Pessoal
+              </button>
+            </div>
+          </section>
+
+          <section className={styles.step} aria-label="Passo 2 de 3">
+            <h2 className={styles.stepTitle}>2. O que foi e quanto custou?</h2>
+            <div className={styles.fields}>
+              <Input
+                label="Descrição"
+                placeholder="Ex.: aluguel do escritório"
+                helperText="Use um nome curto e direto."
+                value={form.description}
+                onChange={(event) => setForm((prevState) => ({ ...prevState, description: event.target.value }))}
+                errorText={errors.description}
+              />
+              <Input
+                label="Valor"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={form.amount}
+                onChange={(event) => setForm((prevState) => ({ ...prevState, amount: event.target.value }))}
+                errorText={errors.amount}
+              />
+              <details className={styles.optionalDetails}>
+                <summary className={styles.optionalSummary}>Campos opcionais (deixar para depois)</summary>
+                <div className={styles.optionalContent}>
+                  <Input
+                    label="Observação"
+                    placeholder="Ex.: ajustar centro de custo depois"
+                    value={form.notes}
+                    onChange={(event) => setForm((prevState) => ({ ...prevState, notes: event.target.value }))}
+                  />
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <section className={styles.step} aria-label="Passo 3 de 3">
+            <h2 className={styles.stepTitle}>3. Confirmar e salvar</h2>
+            <p className={styles.stepHint}>
+              Empresa padrão: <strong>{DEFAULT_COMPANY_ID}</strong> · Mês: <strong>{currentMonth}</strong>
+            </p>
+            <Button type="submit" variant="primary" fullWidth>
+              Salvar lançamento
+            </Button>
+            {savedEntryId ? (
+              <p className={styles.successMessage} role="status">
+                Lançamento salvo com sucesso. ID: {savedEntryId}
+              </p>
+            ) : null}
+          </section>
+        </form>
       </Card>
     </ScreenContainer>
   )

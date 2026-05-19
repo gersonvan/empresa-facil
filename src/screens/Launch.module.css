@@ -1,0 +1,96 @@
+.formCard {
+  max-width: 640px;
+}
+
+.formGrid {
+  display: grid;
+  gap: 20px;
+}
+
+.step {
+  display: grid;
+  gap: 10px;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.stepHint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.intentOptions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+.intentButton {
+  min-height: 42px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.intentButton:hover {
+  border-color: var(--color-border-strong);
+}
+
+.intentButton:focus-visible {
+  outline: 2px solid var(--color-accent-hover);
+  outline-offset: 2px;
+}
+
+.intentActive {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.fields {
+  display: grid;
+  gap: 12px;
+}
+
+.optionalDetails {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+  background: var(--color-surface-soft);
+}
+
+.optionalSummary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.optionalContent {
+  margin-top: 10px;
+}
+
+.successMessage {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-positive);
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .intentOptions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
