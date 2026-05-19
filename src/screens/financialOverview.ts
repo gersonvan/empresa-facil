@@ -1,10 +1,11 @@
 import {
   buildMonthlyDreOverview,
-  calculateDreAndTaxSupport,
+  calculateVersionedSimplesSupport,
+  createSimplesRuleCatalog,
   createDreLineInput,
-  createFiscalRuleSet,
   type MonthlyOverview,
 } from '../calculations'
+import { monthLifecycleStore } from '../monthLifecycle'
 
 const COMPANY_ID = 'company-main'
 const COMPANY_NAME = 'Empresa Principal'
@@ -45,23 +46,51 @@ const monthlyLines = [
   }),
 ]
 
-const fiscalRule = createFiscalRuleSet({
-  version: '2026.05',
-  regime: 'simples_nacional',
-  effectiveRate: 6.1,
+const fiscalRuleCatalog = createSimplesRuleCatalog({
+  rules: [
+    {
+      version: '2026.04',
+      regime: 'simples_nacional',
+      effectiveRate: 5.9,
+      changeReason: 'Tabela vigente ate abril/2026.',
+      publishedAt: '2026-04-01T00:00:00.000Z',
+      source: 'finance-team',
+    },
+    {
+      version: '2026.05',
+      regime: 'simples_nacional',
+      effectiveRate: 6.1,
+      changeReason: 'Ajuste de aliquota efetiva para maio/2026.',
+      publishedAt: '2026-05-01T00:00:00.000Z',
+      source: 'finance-team',
+    },
+  ],
 })
-
-const calculation = calculateDreAndTaxSupport({
-  companyId: COMPANY_ID,
-  month: MONTH,
-  lines: monthlyLines,
-  fiscalRule,
-})
-
-const monthlyOverview = buildMonthlyDreOverview(calculation)
 
 export function getMonthlyOverview(): MonthlyOverview {
-  return monthlyOverview
+  const lifecycle = monthLifecycleStore.getStatus({
+    companyId: COMPANY_ID,
+    month: MONTH,
+  })
+
+  const lifecycleSnapshot = {
+    status: lifecycle.status,
+    hasBeenClosed: lifecycle.hasBeenClosed,
+    closedAt: lifecycle.closedAt,
+    closedByRole: lifecycle.closedByRole,
+    historyCount: Array.isArray(lifecycle.history) ? lifecycle.history.length : null,
+  }
+
+  const calculation = calculateVersionedSimplesSupport({
+    companyId: COMPANY_ID,
+    month: MONTH,
+    lines: monthlyLines,
+    ruleCatalog: fiscalRuleCatalog,
+    ruleVersion: '2026.05',
+    monthLifecycle: lifecycleSnapshot,
+  })
+
+  return buildMonthlyDreOverview(calculation)
 }
 
 export function getMonthContext() {

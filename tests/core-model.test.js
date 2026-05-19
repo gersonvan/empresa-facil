@@ -8,10 +8,15 @@ import {
   toCalculationRecord,
   CALCULATION_CONTRACT,
   MONTHLY_DRE_SUMMARY_CONTRACT,
+  VERSIONED_SIMPLES_SUPPORT_CONTRACT,
   DEFAULT_ACCOUNTANT_WARNING,
+  DEFAULT_RULE_CHANGE_REASON,
   createFiscalRuleSet,
+  createSimplesRuleCatalog,
+  getFiscalRuleFromCatalog,
   createDreLineInput,
   calculateDreAndTaxSupport,
+  calculateVersionedSimplesSupport,
   buildMonthlyDreSummary,
   buildCompactIndicators,
   buildCostGroupSummary,
@@ -91,6 +96,7 @@ function run() {
   assert.equal(typeof CALCULATION_INPUT_CONTRACT.fiscalRule.version, "string");
   assert.equal(CALCULATION_CONTRACT.version, "1.0.0");
   assert.equal(MONTHLY_DRE_SUMMARY_CONTRACT.version, "1.0.0");
+  assert.equal(VERSIONED_SIMPLES_SUPPORT_CONTRACT.version, "1.0.0");
 
   const ingestionRecord = toIngestionRecord(entryA);
   assert.deepEqual(ingestionRecord, {
@@ -116,6 +122,7 @@ function run() {
     version: "simples-v2026.05",
     effectiveRate: 6,
   });
+  assert.equal(fiscalRule.changeReason, DEFAULT_RULE_CHANGE_REASON);
 
   const dreLines = [
     createDreLineInput({
@@ -179,6 +186,11 @@ function run() {
   );
   assert.equal(firstCalc.taxSupport.calculationBase, 900);
   assert.equal(firstCalc.taxSupport.estimatedTax, 54);
+  assert.equal(firstCalc.taxSupport.ruleVersion, "simples-v2026.05");
+  assert.equal(typeof firstCalc.taxSupport.audit.ruleFingerprint, "string");
+  assert.equal(typeof firstCalc.taxSupport.audit.derivationFingerprint, "string");
+  assert.equal(firstCalc.taxSupport.audit.ruleChangeReason, DEFAULT_RULE_CHANGE_REASON);
+  assert.equal(firstCalc.taxSupport.audit.supportOnly, true);
 
   const monthlySummary = buildMonthlyDreSummary(firstCalc);
   assert.deepEqual(monthlySummary, {
@@ -191,6 +203,8 @@ function run() {
     financialIncome: 50,
     operatingResult: 550,
     accountantValidationWarning: DEFAULT_ACCOUNTANT_WARNING,
+    taxRuleVersion: "simples-v2026.05",
+    taxDerivationFingerprint: firstCalc.taxSupport.audit.derivationFingerprint,
   });
 
   const compactIndicators = buildCompactIndicators(monthlySummary);
@@ -229,6 +243,72 @@ function run() {
   assert.deepEqual(overview.costGroups, costGroupSummary);
   assert.deepEqual(overview.views.dashboard.summary, overview.summary);
   assert.deepEqual(overview.views.dreReport.summary, overview.summary);
+  assert.deepEqual(overview.views.dashboard.taxSupport, overview.taxSupport);
+  assert.deepEqual(overview.views.dreReport.taxSupport, overview.taxSupport);
+
+  const versionedCatalog = createSimplesRuleCatalog({
+    rules: [
+      {
+        version: "simples-v2026.05",
+        effectiveRate: 6,
+        changeReason: "Aliquota de maio/2026",
+        publishedAt: "2026-05-01T00:00:00.000Z",
+        source: "finance-team",
+      },
+      {
+        version: "simples-v2026.06",
+        effectiveRate: 7.5,
+        changeReason: "Aliquota de junho/2026",
+        publishedAt: "2026-06-01T00:00:00.000Z",
+        source: "finance-team",
+      },
+    ],
+  });
+
+  const mayRule = getFiscalRuleFromCatalog({
+    ruleCatalog: versionedCatalog,
+    ruleVersion: "simples-v2026.05",
+  });
+  assert.equal(mayRule.effectiveRate, 6);
+
+  const lifecycleSnapshot = {
+    status: "closed",
+    hasBeenClosed: true,
+    closedAt: "2026-05-30T19:00:00.000Z",
+    closedByRole: "owner",
+    history: [{ from: "in_review", to: "closed" }],
+  };
+
+  const historicalMay = calculateVersionedSimplesSupport({
+    companyId: "cmp-alpha",
+    month: "2026-05",
+    lines: dreLines,
+    ruleCatalog: versionedCatalog,
+    ruleVersion: "simples-v2026.05",
+    monthLifecycle: lifecycleSnapshot,
+  });
+
+  const recalculatedMayWithNewerCatalog = calculateVersionedSimplesSupport({
+    companyId: "cmp-alpha",
+    month: "2026-05",
+    lines: dreLines,
+    ruleCatalog: versionedCatalog,
+    ruleVersion: "simples-v2026.05",
+    monthLifecycle: lifecycleSnapshot,
+  });
+
+  assert.deepEqual(historicalMay, recalculatedMayWithNewerCatalog);
+  assert.equal(historicalMay.taxSupport.estimatedTax, 54);
+  assert.equal(
+    historicalMay.taxSupport.audit.lifecycleSnapshot.status,
+    "closed"
+  );
+  assert.equal(historicalMay.taxSupport.audit.lifecycleSnapshot.historyCount, 1);
+  assert.equal(historicalMay.taxSupport.audit.ruleVersion, "simples-v2026.05");
+  assert.equal(
+    historicalMay.taxSupport.audit.ruleChangeReason,
+    "Aliquota de maio/2026"
+  );
 
   console.log("Task 1.2 validation passed.");
 }
