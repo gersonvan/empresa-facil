@@ -4,3 +4,12 @@
   margin: 0;
   padding: 24px 0;
 }
+
+.formCard {
+  max-width: 520px;
+}
+
+.formGrid {
+  display: grid;
+  gap: 16px;
+}
