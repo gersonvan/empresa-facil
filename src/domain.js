@@ -19,6 +19,12 @@ function normalizeMonth(month) {
   if (!/^\d{4}-\d{2}$/.test(normalized)) {
     throw new Error("month must follow YYYY-MM format.");
   }
+
+  const monthPart = Number(normalized.slice(5, 7));
+  if (monthPart < 1 || monthPart > 12) {
+    throw new Error("month must follow YYYY-MM format.");
+  }
+
   return normalized;
 }
 
