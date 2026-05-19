@@ -7,10 +7,15 @@ import {
   toIngestionRecord,
   toCalculationRecord,
   CALCULATION_CONTRACT,
+  MONTHLY_DRE_SUMMARY_CONTRACT,
   DEFAULT_ACCOUNTANT_WARNING,
   createFiscalRuleSet,
   createDreLineInput,
   calculateDreAndTaxSupport,
+  buildMonthlyDreSummary,
+  buildCompactIndicators,
+  buildCostGroupSummary,
+  buildMonthlyDreOverview,
 } from "../src/index.js";
 
 function run() {
@@ -85,6 +90,7 @@ function run() {
   assert.equal(Array.isArray(DRE_GROUP_VALUES), true);
   assert.equal(typeof CALCULATION_INPUT_CONTRACT.fiscalRule.version, "string");
   assert.equal(CALCULATION_CONTRACT.version, "1.0.0");
+  assert.equal(MONTHLY_DRE_SUMMARY_CONTRACT.version, "1.0.0");
 
   const ingestionRecord = toIngestionRecord(entryA);
   assert.deepEqual(ingestionRecord, {
@@ -173,6 +179,56 @@ function run() {
   );
   assert.equal(firstCalc.taxSupport.calculationBase, 900);
   assert.equal(firstCalc.taxSupport.estimatedTax, 54);
+
+  const monthlySummary = buildMonthlyDreSummary(firstCalc);
+  assert.deepEqual(monthlySummary, {
+    companyId: "cmp-alpha",
+    month: "2026-05",
+    fiscalRuleVersion: "simples-v2026.05",
+    revenue: 1000,
+    deductions: 100,
+    expenses: 400,
+    financialIncome: 50,
+    operatingResult: 550,
+    accountantValidationWarning: DEFAULT_ACCOUNTANT_WARNING,
+  });
+
+  const compactIndicators = buildCompactIndicators(monthlySummary);
+  assert.deepEqual(compactIndicators, {
+    companyId: "cmp-alpha",
+    month: "2026-05",
+    netMarginPercent: 55,
+    taxBurdenPercent: 10,
+    totalCosts: 500,
+    operatingResult: 550,
+  });
+
+  const costGroupSummary = buildCostGroupSummary(monthlySummary);
+  assert.deepEqual(costGroupSummary, [
+    {
+      key: "deductions",
+      label: "Deductions",
+      amount: 100,
+      shareOfRevenuePercent: 10,
+    },
+    {
+      key: "expenses",
+      label: "Expenses",
+      amount: 400,
+      shareOfRevenuePercent: 40,
+    },
+  ]);
+
+  const overview = buildMonthlyDreOverview(firstCalc);
+  assert.equal(overview.summary.revenue, 1000);
+  assert.equal(overview.summary.deductions, 100);
+  assert.equal(overview.summary.expenses, 400);
+  assert.equal(overview.summary.financialIncome, 50);
+  assert.equal(overview.summary.operatingResult, 550);
+  assert.equal(overview.indicators.totalCosts, 500);
+  assert.deepEqual(overview.costGroups, costGroupSummary);
+  assert.deepEqual(overview.views.dashboard.summary, overview.summary);
+  assert.deepEqual(overview.views.dreReport.summary, overview.summary);
 
   console.log("Task 1.2 validation passed.");
 }

@@ -197,11 +197,163 @@ const CALCULATION_CONTRACT = {
   },
 };
 
+const MONTHLY_DRE_SUMMARY_CONTRACT = {
+  version: "1.0.0",
+  summary: {
+    companyId: "string",
+    month: "YYYY-MM",
+    fiscalRuleVersion: "string",
+    revenue: "number",
+    deductions: "number",
+    expenses: "number",
+    financialIncome: "number",
+    operatingResult: "number",
+    accountantValidationWarning: "string",
+  },
+  indicators: {
+    netMarginPercent: "number | null",
+    taxBurdenPercent: "number | null",
+    totalCosts: "number",
+  },
+  costGroups: [
+    {
+      key: "deductions | expenses",
+      label: "string",
+      amount: "number",
+      shareOfRevenuePercent: "number | null",
+    },
+  ],
+};
+
+function assertCalculationOutput(calculationOutput) {
+  if (!calculationOutput || typeof calculationOutput !== "object") {
+    throw new Error("calculationOutput must be an object.");
+  }
+
+  assertNonEmptyString(calculationOutput.companyId, "calculationOutput.companyId");
+  assertNonEmptyString(calculationOutput.month, "calculationOutput.month");
+  assertNonEmptyString(
+    calculationOutput.fiscalRuleVersion,
+    "calculationOutput.fiscalRuleVersion"
+  );
+
+  const dreGroups = calculationOutput.dre?.groups;
+  if (!dreGroups || typeof dreGroups !== "object") {
+    throw new Error("calculationOutput.dre.groups must be defined.");
+  }
+
+  assertFiniteNumber(dreGroups.revenue, "calculationOutput.dre.groups.revenue");
+  assertFiniteNumber(dreGroups.deductions, "calculationOutput.dre.groups.deductions");
+  assertFiniteNumber(dreGroups.expenses, "calculationOutput.dre.groups.expenses");
+  assertFiniteNumber(
+    dreGroups.financialIncome,
+    "calculationOutput.dre.groups.financialIncome"
+  );
+  assertFiniteNumber(calculationOutput.dre?.operatingResult, "calculationOutput.dre.operatingResult");
+
+  const accountantValidationWarning = calculationOutput.taxSupport?.accountantValidationWarning;
+  assertNonEmptyString(
+    accountantValidationWarning,
+    "calculationOutput.taxSupport.accountantValidationWarning"
+  );
+}
+
+function buildMonthlyDreSummary(calculationOutput) {
+  assertCalculationOutput(calculationOutput);
+
+  return {
+    companyId: calculationOutput.companyId,
+    month: calculationOutput.month,
+    fiscalRuleVersion: calculationOutput.fiscalRuleVersion,
+    revenue: calculationOutput.dre.groups.revenue,
+    deductions: calculationOutput.dre.groups.deductions,
+    expenses: calculationOutput.dre.groups.expenses,
+    financialIncome: calculationOutput.dre.groups.financialIncome,
+    operatingResult: calculationOutput.dre.operatingResult,
+    accountantValidationWarning: calculationOutput.taxSupport.accountantValidationWarning,
+  };
+}
+
+function buildCompactIndicators(monthlySummary) {
+  assertNonEmptyString(monthlySummary.companyId, "monthlySummary.companyId");
+  assertFiniteNumber(monthlySummary.revenue, "monthlySummary.revenue");
+  assertFiniteNumber(monthlySummary.operatingResult, "monthlySummary.operatingResult");
+  assertFiniteNumber(monthlySummary.deductions, "monthlySummary.deductions");
+  assertFiniteNumber(monthlySummary.expenses, "monthlySummary.expenses");
+
+  const revenue = monthlySummary.revenue;
+  const totalCosts = roundCurrency(monthlySummary.deductions + monthlySummary.expenses);
+  const netMarginPercent =
+    revenue === 0 ? null : roundCurrency((monthlySummary.operatingResult / revenue) * 100);
+  const taxBurdenPercent =
+    revenue === 0 ? null : roundCurrency((monthlySummary.deductions / revenue) * 100);
+
+  return {
+    companyId: monthlySummary.companyId,
+    month: monthlySummary.month,
+    netMarginPercent,
+    taxBurdenPercent,
+    totalCosts,
+    operatingResult: monthlySummary.operatingResult,
+  };
+}
+
+function buildCostGroupSummary(monthlySummary) {
+  assertFiniteNumber(monthlySummary.revenue, "monthlySummary.revenue");
+
+  const revenue = monthlySummary.revenue;
+  const groups = [
+    {
+      key: "deductions",
+      label: "Deductions",
+      amount: monthlySummary.deductions,
+    },
+    {
+      key: "expenses",
+      label: "Expenses",
+      amount: monthlySummary.expenses,
+    },
+  ];
+
+  return groups.map((group) => ({
+    ...group,
+    shareOfRevenuePercent:
+      revenue === 0 ? null : roundCurrency((group.amount / revenue) * 100),
+  }));
+}
+
+function buildMonthlyDreOverview(calculationOutput) {
+  const summary = buildMonthlyDreSummary(calculationOutput);
+  const indicators = buildCompactIndicators(summary);
+  const costGroups = buildCostGroupSummary(summary);
+
+  return {
+    summary,
+    indicators,
+    costGroups,
+    views: {
+      dashboard: {
+        summary,
+        indicators,
+      },
+      dreReport: {
+        summary,
+        costGroups,
+      },
+    },
+  };
+}
+
 export {
   CALCULATION_CONTRACT,
+  MONTHLY_DRE_SUMMARY_CONTRACT,
   DRE_GROUP_VALUES,
   DEFAULT_ACCOUNTANT_WARNING,
   createFiscalRuleSet,
   createDreLineInput,
   calculateDreAndTaxSupport,
+  buildMonthlyDreSummary,
+  buildCompactIndicators,
+  buildCostGroupSummary,
+  buildMonthlyDreOverview,
 };
