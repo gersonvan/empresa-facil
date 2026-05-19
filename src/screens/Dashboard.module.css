@@ -1,0 +1,35 @@
+.indicators {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.indicator {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.indicatorLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.indicatorValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+@media (min-width: 768px) {
+  .indicators {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

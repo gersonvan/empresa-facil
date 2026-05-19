@@ -1,0 +1,32 @@
+.container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.body {
+  /* content area — individual screens provide their own layout */
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 24px 32px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}
