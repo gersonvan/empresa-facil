@@ -1,0 +1,93 @@
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.summaryCard {
+  background: color-mix(in srgb, var(--color-accent-soft) 32%, var(--color-surface));
+}
+
+.summaryList {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.summaryRow dd,
+.summaryRow dt {
+  margin: 0;
+}
+
+.summaryRow dd {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.pos {
+  color: var(--color-positive);
+}
+
+.neg {
+  color: var(--color-negative);
+}
+
+.groupList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.groupRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+}
+
+.groupLabel,
+.groupShare {
+  margin: 0;
+}
+
+.groupLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.groupShare {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (min-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

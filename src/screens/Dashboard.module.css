@@ -46,6 +46,14 @@
   gap: 6px;
 }
 
+.positive {
+  border-color: color-mix(in srgb, var(--color-positive) 28%, var(--color-border));
+}
+
+.negative {
+  border-color: color-mix(in srgb, var(--color-negative) 28%, var(--color-border));
+}
+
 .indicatorLabel {
   font-size: 12px;
   color: var(--color-text-secondary);
@@ -59,6 +67,14 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--color-text-primary);
+}
+
+.positive .indicatorValue {
+  color: var(--color-positive);
+}
+
+.negative .indicatorValue {
+  color: var(--color-negative);
 }
 
 @media (min-width: 768px) {
