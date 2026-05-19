@@ -7,6 +7,8 @@ const DRE_GROUP_VALUES = [
 
 const DEFAULT_ACCOUNTANT_WARNING =
   "A apuracao de tributos e de suporte operacional e deve ser validada pelo contador responsavel antes de qualquer envio oficial.";
+const DEFAULT_RULE_CHANGE_REASON =
+  "Regra aplicada para suporte operacional; validar com contabilidade.";
 
 function assertNonEmptyString(value, fieldName) {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -30,11 +32,59 @@ function roundCurrency(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    const keys = Object.keys(value).sort((left, right) => left.localeCompare(right));
+    return `{${keys
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function fingerprint(value) {
+  const source = stableStringify(value);
+  let hash = 2166136261;
+
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return `fp-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
+function normalizeLifecycleSnapshot(monthLifecycle) {
+  if (monthLifecycle === undefined || monthLifecycle === null) {
+    return null;
+  }
+
+  assertNonEmptyString(monthLifecycle.status, "monthLifecycle.status");
+
+  return {
+    status: monthLifecycle.status,
+    hasBeenClosed: Boolean(monthLifecycle.hasBeenClosed),
+    closedAt: monthLifecycle.closedAt ?? null,
+    closedByRole: monthLifecycle.closedByRole ?? null,
+    historyCount: Array.isArray(monthLifecycle.history)
+      ? monthLifecycle.history.length
+      : null,
+  };
+}
+
 function createFiscalRuleSet({
   version,
   regime = "simples_nacional",
   effectiveRate,
   accountantValidationWarning = DEFAULT_ACCOUNTANT_WARNING,
+  changeReason = DEFAULT_RULE_CHANGE_REASON,
+  publishedAt = null,
+  source = "manual",
 }) {
   assertNonEmptyString(version, "fiscalRule.version");
   assertNonEmptyString(regime, "fiscalRule.regime");
@@ -42,6 +92,8 @@ function createFiscalRuleSet({
     accountantValidationWarning,
     "fiscalRule.accountantValidationWarning"
   );
+  assertNonEmptyString(changeReason, "fiscalRule.changeReason");
+  assertNonEmptyString(source, "fiscalRule.source");
 
   if (effectiveRate !== undefined && effectiveRate !== null) {
     assertFiniteNumber(effectiveRate, "fiscalRule.effectiveRate");
@@ -55,7 +107,45 @@ function createFiscalRuleSet({
     regime: regime.trim(),
     effectiveRate: effectiveRate ?? null,
     accountantValidationWarning: accountantValidationWarning.trim(),
+    changeReason: changeReason.trim(),
+    publishedAt,
+    source: source.trim(),
   };
+}
+
+function createSimplesRuleCatalog({ rules }) {
+  if (!Array.isArray(rules) || rules.length === 0) {
+    throw new Error("rules must be a non-empty array.");
+  }
+
+  const byVersion = new Map();
+  rules.forEach((ruleInput) => {
+    const rule = createFiscalRuleSet(ruleInput);
+    if (byVersion.has(rule.version)) {
+      throw new Error(`Duplicate fiscal rule version '${rule.version}'.`);
+    }
+
+    byVersion.set(rule.version, rule);
+  });
+
+  return {
+    byVersion,
+    versions: Array.from(byVersion.keys()).sort((left, right) => left.localeCompare(right)),
+  };
+}
+
+function getFiscalRuleFromCatalog({ ruleCatalog, ruleVersion }) {
+  if (!ruleCatalog || !(ruleCatalog.byVersion instanceof Map)) {
+    throw new Error("ruleCatalog must be created with createSimplesRuleCatalog.");
+  }
+
+  assertNonEmptyString(ruleVersion, "ruleVersion");
+  const rule = ruleCatalog.byVersion.get(ruleVersion);
+  if (!rule) {
+    throw new Error(`Fiscal rule version '${ruleVersion}' not found in catalog.`);
+  }
+
+  return { ...rule };
 }
 
 function createDreLineInput({
@@ -82,7 +172,13 @@ function createDreLineInput({
   };
 }
 
-function calculateDreAndTaxSupport({ companyId, month, lines, fiscalRule }) {
+function calculateDreAndTaxSupport({
+  companyId,
+  month,
+  lines,
+  fiscalRule,
+  monthLifecycle,
+}) {
   assertNonEmptyString(companyId, "companyId");
   assertNonEmptyString(month, "month");
   if (!Array.isArray(lines)) {
@@ -131,6 +227,33 @@ function calculateDreAndTaxSupport({ companyId, month, lines, fiscalRule }) {
   const estimatedTax =
     estimatedRate === null ? null : roundCurrency((simplesBase * estimatedRate) / 100);
 
+  const lifecycleSnapshot = normalizeLifecycleSnapshot(monthLifecycle);
+  const derivationFingerprint = fingerprint({
+    companyId: companyId.trim(),
+    month: month.trim(),
+    fiscalRuleVersion: normalizedFiscalRule.version,
+    regime: normalizedFiscalRule.regime,
+    effectiveRate: normalizedFiscalRule.effectiveRate,
+    lines: normalizedLines.map((line) => ({
+      entryId: line.entryId,
+      dreGroup: line.dreGroup,
+      amount: line.amount,
+    })),
+    totals,
+    operatingResult,
+    simplesBase,
+    estimatedTax,
+  });
+
+  const ruleFingerprint = fingerprint({
+    version: normalizedFiscalRule.version,
+    regime: normalizedFiscalRule.regime,
+    effectiveRate: normalizedFiscalRule.effectiveRate,
+    changeReason: normalizedFiscalRule.changeReason,
+    source: normalizedFiscalRule.source,
+    publishedAt: normalizedFiscalRule.publishedAt,
+  });
+
   return {
     companyId: companyId.trim(),
     month: month.trim(),
@@ -150,9 +273,42 @@ function calculateDreAndTaxSupport({ companyId, month, lines, fiscalRule }) {
       calculationBase: simplesBase,
       effectiveRate: estimatedRate,
       estimatedTax,
+      ruleVersion: normalizedFiscalRule.version,
       accountantValidationWarning: normalizedFiscalRule.accountantValidationWarning,
+      audit: {
+        ruleVersion: normalizedFiscalRule.version,
+        ruleFingerprint,
+        derivationFingerprint,
+        ruleChangeReason: normalizedFiscalRule.changeReason,
+        ruleSource: normalizedFiscalRule.source,
+        rulePublishedAt: normalizedFiscalRule.publishedAt,
+        lifecycleSnapshot,
+        supportOnly: true,
+      },
     },
   };
+}
+
+function calculateVersionedSimplesSupport({
+  companyId,
+  month,
+  lines,
+  ruleCatalog,
+  ruleVersion,
+  monthLifecycle,
+}) {
+  const fiscalRule = getFiscalRuleFromCatalog({
+    ruleCatalog,
+    ruleVersion,
+  });
+
+  return calculateDreAndTaxSupport({
+    companyId,
+    month,
+    lines,
+    fiscalRule,
+    monthLifecycle,
+  });
 }
 
 const CALCULATION_CONTRACT = {
@@ -163,6 +319,9 @@ const CALCULATION_CONTRACT = {
     regime: "simples_nacional",
     effectiveRate: "number | null",
     accountantValidationWarning: "string",
+    changeReason: "string",
+    publishedAt: "ISO-8601 string | null",
+    source: "string",
   },
   output: {
     companyId: "string",
@@ -192,9 +351,35 @@ const CALCULATION_CONTRACT = {
       calculationBase: "number",
       effectiveRate: "number | null",
       estimatedTax: "number | null",
+      ruleVersion: "string",
       accountantValidationWarning: "string",
+      audit: {
+        ruleVersion: "string",
+        ruleFingerprint: "string",
+        derivationFingerprint: "string",
+        ruleChangeReason: "string",
+        ruleSource: "string",
+        rulePublishedAt: "ISO-8601 string | null",
+        lifecycleSnapshot: {
+          status: "open | in_review | closed",
+          hasBeenClosed: "boolean",
+          closedAt: "ISO-8601 string | null",
+          closedByRole: "string | null",
+          historyCount: "number | null",
+        },
+        supportOnly: true,
+      },
     },
   },
+};
+
+const VERSIONED_SIMPLES_SUPPORT_CONTRACT = {
+  version: "1.0.0",
+  catalog: {
+    versions: ["string"],
+    rules: [CALCULATION_CONTRACT.fiscalRule],
+  },
+  output: CALCULATION_CONTRACT.output,
 };
 
 const MONTHLY_DRE_SUMMARY_CONTRACT = {
@@ -209,6 +394,8 @@ const MONTHLY_DRE_SUMMARY_CONTRACT = {
     financialIncome: "number",
     operatingResult: "number",
     accountantValidationWarning: "string",
+    taxRuleVersion: "string",
+    taxDerivationFingerprint: "string",
   },
   indicators: {
     netMarginPercent: "number | null",
@@ -271,6 +458,8 @@ function buildMonthlyDreSummary(calculationOutput) {
     financialIncome: calculationOutput.dre.groups.financialIncome,
     operatingResult: calculationOutput.dre.operatingResult,
     accountantValidationWarning: calculationOutput.taxSupport.accountantValidationWarning,
+    taxRuleVersion: calculationOutput.taxSupport.ruleVersion,
+    taxDerivationFingerprint: calculationOutput.taxSupport.audit.derivationFingerprint,
   };
 }
 
@@ -331,14 +520,17 @@ function buildMonthlyDreOverview(calculationOutput) {
     summary,
     indicators,
     costGroups,
+    taxSupport: calculationOutput.taxSupport,
     views: {
       dashboard: {
         summary,
         indicators,
+        taxSupport: calculationOutput.taxSupport,
       },
       dreReport: {
         summary,
         costGroups,
+        taxSupport: calculationOutput.taxSupport,
       },
     },
   };
@@ -346,12 +538,17 @@ function buildMonthlyDreOverview(calculationOutput) {
 
 export {
   CALCULATION_CONTRACT,
+  VERSIONED_SIMPLES_SUPPORT_CONTRACT,
   MONTHLY_DRE_SUMMARY_CONTRACT,
   DRE_GROUP_VALUES,
   DEFAULT_ACCOUNTANT_WARNING,
+  DEFAULT_RULE_CHANGE_REASON,
   createFiscalRuleSet,
+  createSimplesRuleCatalog,
+  getFiscalRuleFromCatalog,
   createDreLineInput,
   calculateDreAndTaxSupport,
+  calculateVersionedSimplesSupport,
   buildMonthlyDreSummary,
   buildCompactIndicators,
   buildCostGroupSummary,

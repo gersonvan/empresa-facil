@@ -136,6 +136,9 @@ export default function MonthReview() {
             <li>DRE revisado com indicadores</li>
             <li>Aviso de validação contábil registrado</li>
           </ul>
+          <p className={styles.meta}>Regra fiscal: {overview.summary.taxRuleVersion}</p>
+          <p className={styles.meta}>Rastreio: {overview.summary.taxDerivationFingerprint}</p>
+          <p className={styles.meta}>Contexto do ciclo: {overview.taxSupport.audit.lifecycleSnapshot?.status ?? 'sem contexto'}</p>
           <p className={styles.warning}>{overview.summary.accountantValidationWarning}</p>
         </Card>
 

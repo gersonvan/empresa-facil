@@ -43,6 +43,9 @@ const CALCULATION_INPUT_CONTRACT = {
     regime: "string",
     effectiveRate: "number | null",
     accountantValidationWarning: "string",
+    changeReason: "string",
+    publishedAt: "ISO-8601 string | null",
+    source: "string",
   },
   dreLine: {
     entryId: "string",
