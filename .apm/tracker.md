@@ -1,0 +1,33 @@
+---
+title: EmpresaFacil
+---
+
+# APM Tracker
+
+## Task Tracking
+
+**Stage 1:**
+
+| Task | Status | Agent | Branch |
+|------|--------|-------|--------|
+| 1.1 | Ready | ux-ui-agent | |
+| 1.2 | Ready | application-agent | |
+| 1.3 | Waiting: 1.2 | calculation-agent | |
+
+## Worker Tracking
+
+| Agent | Instance | Notes |
+|-------|----------|-------|
+| ux-ui-agent | 0 | Uninitialized |
+| application-agent | 0 | Uninitialized |
+| calculation-agent | 0 | Uninitialized |
+
+## Version Control
+
+| Repository | Base Branch | Branch Convention | Commit Convention |
+|-----------|-------------|-------------------|-------------------|
+| EmpresaFacil | main | `type/short-description` | `type: description` (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`) |
+
+## Working Notes
+- User requested APM artifacts to be synchronized in version control.
+
