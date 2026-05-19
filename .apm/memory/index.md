@@ -30,3 +30,11 @@ Stage 2 delivered the end-to-end daily operation loop with parallel execution ac
 - task-02-03.log.md
 - task-02-04.log.md
 
+### Stage 3 - Monthly close and tax support
+
+Stage 3 completed the monthly governance and fiscal traceability objectives. The application stream implemented owner-driven close controls with explicit month-state transitions, persisted lifecycle visibility, closed-period write protection, and reopen traceability. The calculation stream then finalized versioned Simples Nacional support with deterministic audit metadata, including rule-version and derivation fingerprints, and aligned this traceability with month-review visibility. The result is a coherent close workflow where month status, DRE summaries, and tax-support evidence remain consistent and historically stable when revisiting prior periods. Stage 3 closed without unresolved compatibility issues.
+
+**Task Logs:**
+- task-03-01.log.md
+- task-03-02.log.md
+
