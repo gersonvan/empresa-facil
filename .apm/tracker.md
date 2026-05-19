@@ -10,7 +10,7 @@ title: EmpresaFacil
 
 | Task | Status | Agent | Branch |
 |------|--------|-------|--------|
-| 1.1 | Active | ux-ui-agent | feat/responsive-shell-navigation |
+| 1.1 | Done | ux-ui-agent | |
 | 1.2 | Active | application-agent | feat/core-data-model-multi-company |
 | 1.3 | Waiting: 1.2 | calculation-agent | |
 
@@ -18,7 +18,7 @@ title: EmpresaFacil
 
 | Agent | Instance | Notes |
 |-------|----------|-------|
-| ux-ui-agent | 0 | Uninitialized |
+| ux-ui-agent | 1 | Initialized |
 | application-agent | 0 | Uninitialized |
 | calculation-agent | 0 | Uninitialized |
 
