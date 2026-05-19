@@ -14,8 +14,8 @@ title: EmpresaFacil
 
 | Task | Status | Agent | Branch |
 |------|--------|-------|--------|
-| 3.1 | Active | application-agent | feat/month-review-status-controls |
-| 3.2 | Waiting: 3.1 | calculation-agent | |
+| 3.1 | Done | application-agent | |
+| 3.2 | Active | calculation-agent | feat/versioned-simples-audit-trail |
 
 ## Worker Tracking
 
@@ -38,4 +38,5 @@ title: EmpresaFacil
 - Stage 1 completed and Stage 2 started with parallel dispatch for 2.1, 2.2, and 2.3.
 - Stage 2 reports for 2.1, 2.2, and 2.3 reviewed as Success and merged.
 - Stage 2 completed after successful review and merge of Task 2.4.
+- Task 3.1 reviewed as Success; lifecycle controls are present in main and Stage 3 advanced to 3.2.
 
