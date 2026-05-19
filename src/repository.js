@@ -56,6 +56,28 @@ class CoreRepository {
     return entry;
   }
 
+  getLaunchEntryById(entryId) {
+    return this.launchEntries.find((entry) => entry.id === entryId) ?? null;
+  }
+
+  updateLaunchEntry(entryId, updateInput) {
+    const index = this.launchEntries.findIndex((entry) => entry.id === entryId);
+    if (index === -1) {
+      throw new Error(`Launch entry '${entryId}' does not exist.`);
+    }
+
+    const current = this.launchEntries[index];
+    const nextEntry = createLaunchEntry({
+      ...current,
+      ...updateInput,
+      id: current.id,
+      companyId: current.companyId,
+    });
+
+    this.launchEntries[index] = nextEntry;
+    return nextEntry;
+  }
+
   listLaunchEntries(filters = {}) {
     const { companyId, month, costType } = filters;
     if (costType !== undefined && !COST_TYPE_VALUES.includes(costType)) {

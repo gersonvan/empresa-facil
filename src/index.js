@@ -22,3 +22,10 @@ export {
   createDreLineInput,
   calculateDreAndTaxSupport,
 } from "./calculations.js";
+export {
+  createManualEntry,
+  updateManualEntry,
+  parseDelimitedText,
+  importFromCsv,
+  importFromExcelRows,
+} from "./ingestion.js";
