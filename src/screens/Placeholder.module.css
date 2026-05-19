@@ -1,0 +1,6 @@
+.placeholder {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin: 0;
+  padding: 24px 0;
+}

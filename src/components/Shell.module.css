@@ -1,0 +1,16 @@
+.shell {
+  min-height: 100dvh;
+}
+
+.content {
+  /* bottom padding makes room for the fixed bottom nav on mobile */
+  padding-bottom: var(--nav-height);
+}
+
+@media (min-width: 768px) {
+  .content {
+    padding-bottom: 0;
+    /* left padding makes room for the fixed sidebar nav on desktop */
+    padding-left: var(--sidebar-width);
+  }
+}
