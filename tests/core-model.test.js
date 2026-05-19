@@ -77,10 +77,10 @@ function run() {
     month: "2026-05",
     nextStatus: "in_review",
   });
-  repo.transitionMonthStatus({
+  repo.approveAndCloseMonth({
     companyId: alpha.id,
     month: "2026-05",
-    nextStatus: "closed",
+    approvedByRole: "owner",
   });
 
   const monthState = repo.getMonthStatus(alpha.id, "2026-05");

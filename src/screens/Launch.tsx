@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import ScreenContainer from '../components/ScreenContainer'
 import { createLaunchEntry } from '../domain'
 import { toIngestionRecord } from '../contracts'
+import { monthLifecycleStore } from '../monthLifecycle'
 import { Button, Card, Input } from '../components/ui'
 import styles from './Launch.module.css'
 
@@ -52,6 +53,7 @@ export default function Launch() {
   })
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string>('')
 
   const currentMonth = useMemo(() => monthFromNow(), [])
 
@@ -79,6 +81,11 @@ export default function Launch() {
       return
     }
 
+    if (monthLifecycleStore.isMonthClosed({ companyId: DEFAULT_COMPANY_ID, month: currentMonth })) {
+      setStatusMessage('Este mês está fechado. Reabra em Revisão do Mês para incluir ou editar lançamentos.')
+      return
+    }
+
     const entry = createLaunchEntry({
       id: nextEntryId(),
       companyId: DEFAULT_COMPANY_ID,
@@ -91,6 +98,7 @@ export default function Launch() {
     // Keep payload compatibility visible in UI for manual and import parity.
     const ingestionRecord = toIngestionRecord(entry)
     setSavedEntryId(String(ingestionRecord.source_id))
+    setStatusMessage('')
 
     setForm((prevState) => ({
       ...prevState,
@@ -171,6 +179,11 @@ export default function Launch() {
             {savedEntryId ? (
               <p className={styles.successMessage} role="status">
                 Lançamento salvo com sucesso. ID: {savedEntryId}
+              </p>
+            ) : null}
+            {statusMessage ? (
+              <p className={styles.protectionMessage} role="status">
+                {statusMessage}
               </p>
             ) : null}
           </section>

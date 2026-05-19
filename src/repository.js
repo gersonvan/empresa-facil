@@ -16,6 +16,19 @@ class CoreRepository {
     this.monthStates = new Map();
   }
 
+  #getMonthStateKey(companyId, month) {
+    return `${companyId}:${normalizeMonth(month)}`;
+  }
+
+  #getWritableMonthState(companyId, month) {
+    const state = this.getMonthStatus(companyId, month);
+    if (state !== null && state.status === "closed") {
+      throw new Error(
+        `Month '${state.month}' for company '${companyId}' is closed and protected against edits.`
+      );
+    }
+  }
+
   addCompany(companyInput) {
     const company = createCompany(companyInput);
     if (this.companies.has(company.id)) {
@@ -52,6 +65,8 @@ class CoreRepository {
       throw new Error(`Company '${entry.companyId}' does not exist.`);
     }
 
+    this.#getWritableMonthState(entry.companyId, entry.month);
+
     this.launchEntries.push(entry);
     return entry;
   }
@@ -67,12 +82,16 @@ class CoreRepository {
     }
 
     const current = this.launchEntries[index];
+    this.#getWritableMonthState(current.companyId, current.month);
+
     const nextEntry = createLaunchEntry({
       ...current,
       ...updateInput,
       id: current.id,
       companyId: current.companyId,
     });
+
+    this.#getWritableMonthState(nextEntry.companyId, nextEntry.month);
 
     this.launchEntries[index] = nextEntry;
     return nextEntry;
@@ -106,35 +125,79 @@ class CoreRepository {
       throw new Error(`Company '${monthState.companyId}' does not exist.`);
     }
 
-    const key = `${monthState.companyId}:${monthState.month}`;
-    this.monthStates.set(key, monthState);
-    return monthState;
+    const key = this.#getMonthStateKey(monthState.companyId, monthState.month);
+    const previousState = this.monthStates.get(key) ?? null;
+    const history = Array.isArray(previousState?.history)
+      ? [...previousState.history]
+      : [];
+
+    if (previousState?.status !== monthState.status) {
+      history.push({
+        from: previousState?.status ?? null,
+        to: monthState.status,
+        at: monthState.updatedAt,
+        actorRole: monthState.updatedByRole ?? "system",
+        reason: monthState.reason ?? null,
+      });
+    }
+
+    const nextState = {
+      ...previousState,
+      ...monthState,
+      history,
+      hasBeenClosed:
+        monthState.status === "closed" || Boolean(previousState?.hasBeenClosed),
+      closedAt:
+        monthState.status === "closed"
+          ? monthState.updatedAt
+          : previousState?.closedAt ?? null,
+      closedByRole:
+        monthState.status === "closed"
+          ? monthState.updatedByRole ?? null
+          : previousState?.closedByRole ?? null,
+    };
+
+    this.monthStates.set(key, nextState);
+    return nextState;
   }
 
   getMonthStatus(companyId, month) {
-    const key = `${companyId}:${normalizeMonth(month)}`;
+    const key = this.#getMonthStateKey(companyId, month);
     return this.monthStates.get(key) ?? null;
   }
 
-  transitionMonthStatus({ companyId, month, nextStatus, updatedAt }) {
+  transitionMonthStatus({
+    companyId,
+    month,
+    nextStatus,
+    updatedAt,
+    updatedByRole = "system",
+    reason,
+  }) {
     if (!MONTH_STATUS_VALUES.includes(nextStatus)) {
       throw new Error(`Unknown month status '${nextStatus}'.`);
     }
 
     const current = this.getMonthStatus(companyId, month);
     if (current === null) {
+      if (nextStatus === "closed") {
+        throw new Error("Month cannot be closed directly. Move to in_review first.");
+      }
+
       return this.setMonthStatus({
         companyId,
         month,
         status: nextStatus,
         updatedAt,
+        updatedByRole,
+        reason,
       });
     }
 
     const allowedTransitions = {
-      open: ["in_review", "closed"],
+      open: ["in_review"],
       in_review: ["open", "closed"],
-      closed: ["closed"],
+      closed: ["in_review"],
     };
 
     if (!allowedTransitions[current.status].includes(nextStatus)) {
@@ -143,11 +206,45 @@ class CoreRepository {
       );
     }
 
+    if (nextStatus === "closed") {
+      throw new Error("Closing a month requires owner approval via approveAndCloseMonth.");
+    }
+
+    if (current.status === "closed" && updatedByRole !== "owner") {
+      throw new Error("Only owner can reopen a closed month.");
+    }
+
     return this.setMonthStatus({
       companyId,
       month,
       status: nextStatus,
       updatedAt,
+      updatedByRole,
+      reason,
+    });
+  }
+
+  approveAndCloseMonth({ companyId, month, approvedByRole, updatedAt }) {
+    if (approvedByRole !== "owner") {
+      throw new Error("Only owner approval can close the month.");
+    }
+
+    const current = this.getMonthStatus(companyId, month);
+    if (current === null) {
+      throw new Error("Month must be in review before closing.");
+    }
+
+    if (current.status !== "in_review") {
+      throw new Error("Month must be in_review before closing.");
+    }
+
+    return this.setMonthStatus({
+      companyId,
+      month,
+      status: "closed",
+      updatedAt,
+      updatedByRole: approvedByRole,
+      reason: "Owner approval",
     });
   }
 }

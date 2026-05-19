@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import { MONTH_STATUS_VALUES } from '../domain'
+import { monthLifecycleStore } from '../monthLifecycle'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
 import styles from './MonthReview.module.css'
 
@@ -16,8 +17,11 @@ const statusLabel: Record<MonthStatus, string> = {
 export default function MonthReview() {
   const month = getMonthContext()
   const overview = getMonthlyOverview()
-  const [status, setStatus] = useState<MonthStatus>('open')
+  const [statusState, setStatusState] = useState(() =>
+    monthLifecycleStore.getStatus({ companyId: month.companyId, month: month.month })
+  )
   const [message, setMessage] = useState('')
+  const status = statusState.status as MonthStatus
 
   const nextActions = useMemo(() => {
     if (status === 'open') {
@@ -31,17 +35,60 @@ export default function MonthReview() {
       ]
     }
 
-    return [{ key: 'closed', label: 'Mês já fechado' }]
+    return [{ key: 'reopen_closed', label: 'Reabrir para revisão' }]
   }, [status])
 
-  function applyStatus(nextStatus: MonthStatus) {
-    if (status === 'closed') {
-      setMessage('Este mês já está fechado e protegido contra edição.')
-      return
-    }
+  function refreshStatus(nextState: ReturnType<typeof monthLifecycleStore.getStatus>) {
+    setStatusState(nextState)
+  }
 
-    setStatus(nextStatus)
-    setMessage(`Status atualizado para ${statusLabel[nextStatus]}.`)
+  function applyStatus(nextAction: string) {
+    try {
+      if (nextAction === 'in_review') {
+        const nextState = monthLifecycleStore.sendToReview({
+          companyId: month.companyId,
+          month: month.month,
+          actorRole: 'owner',
+        })
+        refreshStatus(nextState)
+        setMessage(`Status atualizado para ${statusLabel.in_review}.`)
+        return
+      }
+
+      if (nextAction === 'open') {
+        const nextState = monthLifecycleStore.moveBackToOpen({
+          companyId: month.companyId,
+          month: month.month,
+          actorRole: 'owner',
+        })
+        refreshStatus(nextState)
+        setMessage(`Status atualizado para ${statusLabel.open}.`)
+        return
+      }
+
+      if (nextAction === 'closed') {
+        const nextState = monthLifecycleStore.approveAndClose({
+          companyId: month.companyId,
+          month: month.month,
+          approverRole: 'owner',
+        })
+        refreshStatus(nextState)
+        setMessage('Mês fechado com aprovação do Dono e protegido contra edições.')
+        return
+      }
+
+      if (nextAction === 'reopen_closed') {
+        const nextState = monthLifecycleStore.reopenClosedMonth({
+          companyId: month.companyId,
+          month: month.month,
+          actorRole: 'owner',
+        })
+        refreshStatus(nextState)
+        setMessage('Mês reaberto para revisão. Histórico de fechamento foi preservado.')
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível atualizar o status.')
+    }
   }
 
   return (
@@ -52,6 +99,11 @@ export default function MonthReview() {
           <p className={styles.meta}>Empresa: {month.companyName}</p>
           <p className={styles.meta}>Mês: {month.month}</p>
           <p className={styles.currentStatus}>Atual: {statusLabel[status]}</p>
+          {statusState.hasBeenClosed && statusState.closedAt ? (
+            <p className={styles.auditNote}>
+              Fechamento anterior registrado em {new Date(statusState.closedAt).toLocaleString('pt-BR')}.
+            </p>
+          ) : null}
 
           <div className={styles.actionGroup}>
             {nextActions.map((action) => (
@@ -59,13 +111,16 @@ export default function MonthReview() {
                 key={action.key}
                 variant={action.key === 'closed' ? 'primary' : 'secondary'}
                 size="sm"
-                onClick={() => applyStatus(action.key as MonthStatus)}
-                disabled={status === 'closed'}
+                onClick={() => applyStatus(action.key)}
               >
                 {action.label}
               </Button>
             ))}
           </div>
+
+          {status === 'in_review' ? (
+            <p className={styles.ownerHint}>Somente a ação Aprovar (Dono) conclui o fechamento do mês.</p>
+          ) : null}
 
           {message ? (
             <p className={styles.message} role="status">

@@ -34,3 +34,4 @@ export {
   importFromCsv,
   importFromExcelRows,
 } from "./ingestion.js";
+export { createMonthLifecycleStore, monthLifecycleStore } from "./monthLifecycle.js";
