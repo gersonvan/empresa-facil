@@ -1,57 +1,50 @@
 ---
 stage: 2
-task: 1
+task: 4
 agent: ux-ui-agent
-log_path: ".apm/memory/stage-02/task-02-01.log.md"
+log_path: ".apm/memory/stage-02/task-02-04.log.md"
 has_dependencies: true
 ---
 
-# APM Task 2.1: Fast launch forms and guided daily flow
+# APM Task 2.4: Screen Implementation
 
 ## Task Reference
-- Task ID: 2.1
+- Task ID: 2.4
 - Assigned agent: ux-ui-agent
 
 ## Context from Dependencies
-This task depends on work completed by multiple tasks.
+Building on your previous work:
 
-**From your previous UX work (Task 1.1):**
-- Responsive shell, navigation, and screen containers are already in place.
-
-**Cross-agent integration required (Task 1.2):**
-1. Read `src/domain.js` for entity constraints and classifications (`company`, `personal`, month state concepts).
-2. Read `src/repository.js` for query and persistence patterns by company, month, and cost type.
-3. Read `src/contracts.js` and `src/index.js` to align launch form payloads with the established data contract and exported APIs.
+**From Task 1.5:**
+- Reusable base UI components (`Button`, `Input`, `Card`) are available and integrated in current screens.
+- Token and theming foundations are already active and should remain the visual baseline.
 
 **Integration Approach:**
-- Keep the launch experience minimal while aligning fields and submission shape with the existing normalized data model.
+- Implement dashboard, DRE view, and month-close screens using the existing component library.
+- Keep consistency with the prototype-driven style direction and current responsive shell.
 
 ## Objective
-Create the minimal launch experience and guided daily flow that lets users record costs in three steps or fewer.
+Implement the main screens (dashboard, DRE view, month-close) based on the design prototypes, integrated with the current application framework.
 
 ## Detailed Instructions
-1. Design and implement manual launch forms with minimal required fields and clearly deferred optional fields.
-2. Make personal vs company entry intent explicit without heavy accounting language.
-3. Add guided daily next-step cues so users are prompted toward the most relevant action.
-4. Ensure the flow remains responsive and usable on phone and desktop.
-5. Align form structure with the shared data contract so import and manual paths stay conceptually consistent.
+1. Implement production-ready dashboard, DRE, and month-close screens using shared UI primitives.
+2. Integrate with existing data/calculation services where available (no duplicated business logic).
+3. Keep screen structure consistent with token/theming system and responsive behavior across mobile and desktop.
+4. Ensure interactions are clear and usable for daily workflow and monthly review context.
+5. Preserve simplicity constraints in navigation and interaction flow.
 
 ## Workspace
-- Code workspace: `.apm/worktrees/feat-launch-forms-guided-flow`
-- Branch: `feat/launch-forms-guided-flow`
-- Project root for APM runtime files: `<project-root>`
-- Use project root paths for all `.apm` artifacts (Task Log, bus files).
+- Working directory: `<project-root>`
+- Branch: `feat/screen-implementation-prototypes`
 
 ## Expected Output
-- Manual launch forms
-- Daily next-step prompts/guidance
-- Minimal required field flow for personal and company entries
+- Main screens implemented and integrated with current app structure
+- Visual consistency with design prototypes and component library usage
 
 ## Validation Criteria
-- Launch can be completed in three steps or fewer.
-- Required fields remain minimal and optional fields are deferred.
-- Daily flow clearly indicates next relevant user action.
-- Layout remains usable on both phone and desktop.
+- Screens are visually consistent with prototypes.
+- Screens are functionally integrated with existing application services.
+- Layout and behavior remain responsive and usable on desktop and mobile.
 
 ## Instruction Accuracy
 The objective and expected output are authoritative. If any detailed instruction conflicts with actual codebase state, validate the real state and adapt accordingly.
@@ -60,7 +53,7 @@ The objective and expected output are authoritative. If any detailed instruction
 When validation fails, investigate before fixing. Apply one targeted change per iteration. If unresolved, report Partial with blockers and attempted fixes.
 
 ## Task Logging
-After completion, write your Task Log to `.apm/memory/stage-02/task-02-01.log.md` following `.github/apm-guides/task-logging.md` section 3.1.
+After completion, write your Task Log to `.apm/memory/stage-02/task-02-04.log.md` following `.github/apm-guides/task-logging.md` section 3.1.
 
 ## Reporting Instructions
 Write your Task Report to `.apm/bus/ux-ui-agent/report.md` and direct the user to return with:
