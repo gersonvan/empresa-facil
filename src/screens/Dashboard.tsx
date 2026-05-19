@@ -1,16 +1,22 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import { useNavigate } from 'react-router-dom'
+import { formatCurrency, getMonthlyOverview } from './financialOverview'
 import styles from './Dashboard.module.css'
-
-const indicators = [
-  { label: 'Receita', value: '—' },
-  { label: 'Despesa', value: '—' },
-  { label: 'Resultado', value: '—' },
-]
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const overview = getMonthlyOverview()
+
+  const indicators = [
+    { label: 'Receita', value: formatCurrency(overview.summary.revenue), tone: 'default' },
+    { label: 'Despesas', value: formatCurrency(overview.summary.expenses), tone: 'negative' },
+    {
+      label: 'Resultado',
+      value: formatCurrency(overview.summary.operatingResult),
+      tone: overview.summary.operatingResult >= 0 ? 'positive' : 'negative',
+    },
+  ]
 
   return (
     <ScreenContainer title="Dashboard">
@@ -23,7 +29,11 @@ export default function Dashboard() {
       <Card className={styles.nextStepCard} padding="compact">
         <div className={styles.nextStepHeader}>
           <h2 className={styles.nextStepTitle}>Próximo passo do dia</h2>
-          <p className={styles.nextStepText}>Registre primeiro o gasto mais recente para manter o mês em dia.</p>
+          <p className={styles.nextStepText}>
+            {overview.summary.operatingResult >= 0
+              ? 'Resultado positivo no momento. Continue lançando para fechar o mês com segurança.'
+              : 'Resultado em queda. Priorize lançar os custos mais recentes para ajustar o mês.'}
+          </p>
         </div>
         <div className={styles.nextStepActions}>
           <Button size="sm" onClick={() => navigate('/launch?intent=company')}>Registrar empresa</Button>
@@ -34,8 +44,8 @@ export default function Dashboard() {
       </Card>
 
       <div className={styles.indicators}>
-        {indicators.map(({ label, value }) => (
-          <Card key={label} className={styles.indicator} padding="regular">
+        {indicators.map(({ label, value, tone }) => (
+          <Card key={label} className={`${styles.indicator} ${tone === 'positive' ? styles.positive : ''} ${tone === 'negative' ? styles.negative : ''}`} padding="regular">
             <span className={styles.indicatorLabel}>{label}</span>
             <span className={styles.indicatorValue}>{value}</span>
           </Card>
