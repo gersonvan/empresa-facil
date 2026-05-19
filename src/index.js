@@ -8,4 +8,17 @@ export {
   createUserContext,
 } from "./domain.js";
 export { CoreRepository } from "./repository.js";
-export { DATA_CONTRACT, toIngestionRecord, toCalculationRecord } from "./contracts.js";
+export {
+  DATA_CONTRACT,
+  DRE_GROUP_VALUES,
+  CALCULATION_INPUT_CONTRACT,
+  toIngestionRecord,
+  toCalculationRecord,
+} from "./contracts.js";
+export {
+  CALCULATION_CONTRACT,
+  DEFAULT_ACCOUNTANT_WARNING,
+  createFiscalRuleSet,
+  createDreLineInput,
+  calculateDreAndTaxSupport,
+} from "./calculations.js";
