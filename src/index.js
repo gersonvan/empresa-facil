@@ -17,8 +17,13 @@ export {
 } from "./contracts.js";
 export {
   CALCULATION_CONTRACT,
+  MONTHLY_DRE_SUMMARY_CONTRACT,
   DEFAULT_ACCOUNTANT_WARNING,
   createFiscalRuleSet,
   createDreLineInput,
   calculateDreAndTaxSupport,
+  buildMonthlyDreSummary,
+  buildCompactIndicators,
+  buildCostGroupSummary,
+  buildMonthlyDreOverview,
 } from "./calculations.js";
