@@ -1,70 +1,75 @@
 ---
-stage: 1
-task: 5
+stage: 2
+task: 1
 agent: ux-ui-agent
-log_path: ".apm/memory/stage-01/task-01-05.log.md"
+log_path: ".apm/memory/stage-02/task-02-01.log.md"
 has_dependencies: true
 ---
 
-# APM Task 1.5: Component Library Setup
+# APM Task 2.1: Fast launch forms and guided daily flow
 
 ## Task Reference
-- Task ID: 1.5
+- Task ID: 2.1
 - Assigned agent: ux-ui-agent
 
 ## Context from Dependencies
-Building on your previous work:
+This task depends on work completed by multiple tasks.
 
-**From Task 1.4:**
-- Global design tokens are implemented and applied through CSS variables.
-- Theming supports persisted light/dark mode with runtime toggle support.
-- Shell, navigation, and shared container now reflect token-driven styling.
+**From your previous UX work (Task 1.1):**
+- Responsive shell, navigation, and screen containers are already in place.
+
+**Cross-agent integration required (Task 1.2):**
+1. Read `src/domain.js` for entity constraints and classifications (`company`, `personal`, month state concepts).
+2. Read `src/repository.js` for query and persistence patterns by company, month, and cost type.
+3. Read `src/contracts.js` and `src/index.js` to align launch form payloads with the established data contract and exported APIs.
 
 **Integration Approach:**
-- Build reusable base components that consume existing tokens and theme variables.
-- Preserve current responsive shell behavior while migrating screen-level UI to reusable primitives.
+- Keep the launch experience minimal while aligning fields and submission shape with the existing normalized data model.
 
 ## Objective
-Recreate the base UI components using the design system and tokens, producing a reusable component library aligned with the provided prototypes.
+Create the minimal launch experience and guided daily flow that lets users record costs in three steps or fewer.
 
 ## Detailed Instructions
-1. Implement reusable base components (at minimum buttons, inputs, and cards) with clear APIs and variant support where appropriate.
-2. Ensure all components use the token/theming foundation from Task 1.4 rather than hard-coded visual values.
-3. Apply accessibility basics (keyboard usability, focus states, labels/ARIA where needed, contrast-aware styling).
-4. Validate responsive behavior for mobile and desktop breakpoints.
-5. Integrate components into current screens where practical to verify real usage and consistency.
+1. Design and implement manual launch forms with minimal required fields and clearly deferred optional fields.
+2. Make personal vs company entry intent explicit without heavy accounting language.
+3. Add guided daily next-step cues so users are prompted toward the most relevant action.
+4. Ensure the flow remains responsive and usable on phone and desktop.
+5. Align form structure with the shared data contract so import and manual paths stay conceptually consistent.
 
 ## Workspace
-- Working directory: `<project-root>`
-- Branch: `feat/component-library-setup`
+- Code workspace: `.apm/worktrees/feat-launch-forms-guided-flow`
+- Branch: `feat/launch-forms-guided-flow`
+- Project root for APM runtime files: `<project-root>`
+- Use project root paths for all `.apm` artifacts (Task Log, bus files).
 
 ## Expected Output
-- A reusable base component library aligned with the design system/tokens
-- Components ready for reuse in upcoming screen implementation work
+- Manual launch forms
+- Daily next-step prompts/guidance
+- Minimal required field flow for personal and company entries
 
 ## Validation Criteria
-- Components match the intended prototype style direction and remain responsive.
-- Component styles remain consistent across light/dark themes.
-- Component APIs are reusable and reduce duplicated UI code.
-- Accessibility and interaction states are present and functional.
+- Launch can be completed in three steps or fewer.
+- Required fields remain minimal and optional fields are deferred.
+- Daily flow clearly indicates next relevant user action.
+- Layout remains usable on both phone and desktop.
 
 ## Instruction Accuracy
-The objective and expected output are authoritative. If any detailed instruction conflicts with the actual codebase state, validate the real state and adapt accordingly.
+The objective and expected output are authoritative. If any detailed instruction conflicts with actual codebase state, validate the real state and adapt accordingly.
 
 ## Task Iteration
-When validation fails, investigate before fixing. Apply one targeted change per iteration. If a fix does not resolve the issue, run focused debugging with subagents and report unresolved blockers as Partial.
+When validation fails, investigate before fixing. Apply one targeted change per iteration. If unresolved, report Partial with blockers and attempted fixes.
 
 ## Task Logging
-After completion, write your Task Log to `.apm/memory/stage-01/task-01-05.log.md` following `.github/apm-guides/task-logging.md` section 3.1.
+After completion, write your Task Log to `.apm/memory/stage-02/task-02-01.log.md` following `.github/apm-guides/task-logging.md` section 3.1.
 
 ## Reporting Instructions
-Write your Task Report to `.apm/bus/ux-ui-agent/report.md` and then direct the user to return here with:
+Write your Task Report to `.apm/bus/ux-ui-agent/report.md` and direct the user to return with:
 
 ```bash
 /apm-5-check-reports ux-ui-agent
 ```
 
-Also include the general command option:
+General option:
 
 ```bash
 /apm-5-check-reports
