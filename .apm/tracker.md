@@ -10,8 +10,8 @@ title: EmpresaFacil
 
 | Task | Status | Agent | Branch |
 |------|--------|-------|--------|
-| 1.1 | Ready | ux-ui-agent | |
-| 1.2 | Ready | application-agent | |
+| 1.1 | Active | ux-ui-agent | feat/responsive-shell-navigation |
+| 1.2 | Active | application-agent | feat/core-data-model-multi-company |
 | 1.3 | Waiting: 1.2 | calculation-agent | |
 
 ## Worker Tracking
