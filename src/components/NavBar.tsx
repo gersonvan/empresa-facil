@@ -11,6 +11,15 @@ const navItems = [
 export default function NavBar() {
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
+      <div className={styles.brand}>
+        <div className={styles.brandMark} aria-hidden="true">
+          EF
+        </div>
+        <div className={styles.brandTextBlock}>
+          <span className={styles.brandTitle}>EmpresaFácil</span>
+          <span className={styles.brandSubtitle}>Controle financeiro simples</span>
+        </div>
+      </div>
       {navItems.map(({ path, label }) => (
         <NavLink
           key={path}
