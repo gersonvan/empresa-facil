@@ -13,8 +13,8 @@ title: EmpresaFacil
 | 1.1 | Done | ux-ui-agent | |
 | 1.2 | Done | application-agent | |
 | 1.3 | Done | calculation-agent | |
-| 1.4 | Active | ux-ui-agent | feat/design-tokens-theming |
-| 1.5 | Waiting: 1.4 | ux-ui-agent | |
+| 1.4 | Done | ux-ui-agent | |
+| 1.5 | Active | ux-ui-agent | feat/component-library-setup |
 
 ## Worker Tracking
 

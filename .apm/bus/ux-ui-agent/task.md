@@ -1,53 +1,52 @@
 ---
 stage: 1
-task: 4
+task: 5
 agent: ux-ui-agent
-log_path: ".apm/memory/stage-01/task-01-04.log.md"
+log_path: ".apm/memory/stage-01/task-01-05.log.md"
 has_dependencies: true
 ---
 
-# APM Task 1.4: Design Tokens and Theming
+# APM Task 1.5: Component Library Setup
 
 ## Task Reference
-- Task ID: 1.4
+- Task ID: 1.5
 - Assigned agent: ux-ui-agent
 
 ## Context from Dependencies
 Building on your previous work:
 
-**From Task 1.1:**
-- A responsive shell and navigation system is already implemented with mobile/desktop adaptations.
-- Top-level screens and shared layout containers already exist.
-- Global styles are present and currently drive the visual baseline.
+**From Task 1.4:**
+- Global design tokens are implemented and applied through CSS variables.
+- Theming supports persisted light/dark mode with runtime toggle support.
+- Shell, navigation, and shared container now reflect token-driven styling.
 
 **Integration Approach:**
-- Build token and theming foundations into the existing global style architecture.
-- Avoid breaking shell/navigation behavior while introducing theme variables and toggling support.
+- Build reusable base components that consume existing tokens and theme variables.
+- Preserve current responsive shell behavior while migrating screen-level UI to reusable primitives.
 
 ## Objective
-Implement design tokens (colors, typography, spacing) and a reusable theming system aligned with the provided high-fidelity prototypes.
+Recreate the base UI components using the design system and tokens, producing a reusable component library aligned with the provided prototypes.
 
 ## Detailed Instructions
-1. Extract and define design tokens from the available design artifacts in the workspace and structure them for reuse.
-2. Implement a global theming system with light and dark modes, ensuring tokens are the source of truth.
-3. Apply tokens consistently across existing shell/navigation and current top-level screens.
-4. Ensure accessibility baseline for contrast and readability in both themes.
-5. Keep responsive behavior intact on phone and desktop viewports.
+1. Implement reusable base components (at minimum buttons, inputs, and cards) with clear APIs and variant support where appropriate.
+2. Ensure all components use the token/theming foundation from Task 1.4 rather than hard-coded visual values.
+3. Apply accessibility basics (keyboard usability, focus states, labels/ARIA where needed, contrast-aware styling).
+4. Validate responsive behavior for mobile and desktop breakpoints.
+5. Integrate components into current screens where practical to verify real usage and consistency.
 
 ## Workspace
 - Working directory: `<project-root>`
-- Branch: `feat/design-tokens-theming`
+- Branch: `feat/component-library-setup`
 
 ## Expected Output
-- Reusable design-token system
-- Global theming mechanism with light and dark mode support
-- Consistent token usage across existing components/screens
+- A reusable base component library aligned with the design system/tokens
+- Components ready for reuse in upcoming screen implementation work
 
 ## Validation Criteria
-- Tokens are applied consistently across the updated UI surface.
-- Theme toggling works between light and dark without visual inconsistencies.
-- Contrast and readability remain acceptable across both themes.
-- Existing responsive shell/navigation behavior remains functional.
+- Components match the intended prototype style direction and remain responsive.
+- Component styles remain consistent across light/dark themes.
+- Component APIs are reusable and reduce duplicated UI code.
+- Accessibility and interaction states are present and functional.
 
 ## Instruction Accuracy
 The objective and expected output are authoritative. If any detailed instruction conflicts with the actual codebase state, validate the real state and adapt accordingly.
@@ -56,7 +55,7 @@ The objective and expected output are authoritative. If any detailed instruction
 When validation fails, investigate before fixing. Apply one targeted change per iteration. If a fix does not resolve the issue, run focused debugging with subagents and report unresolved blockers as Partial.
 
 ## Task Logging
-After completion, write your Task Log to `.apm/memory/stage-01/task-01-04.log.md` following `.github/apm-guides/task-logging.md` section 3.1.
+After completion, write your Task Log to `.apm/memory/stage-01/task-01-05.log.md` following `.github/apm-guides/task-logging.md` section 3.1.
 
 ## Reporting Instructions
 Write your Task Report to `.apm/bus/ux-ui-agent/report.md` and then direct the user to return here with:
