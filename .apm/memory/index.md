@@ -20,3 +20,13 @@ Stage 1 delivered the project baseline across interface, data model, and calcula
 - task-01-04.log.md
 - task-01-05.log.md
 
+### Stage 2 - Daily capture and DRE visibility
+
+Stage 2 delivered the end-to-end daily operation loop with parallel execution across UX/UI, application ingestion, and calculation summarization, followed by integrated screen implementation. The UX/UI stream implemented a guided three-step launch flow and then integrated full dashboard, DRE, and month-review screens using shared design-system primitives. The application stream delivered manual entry create/update plus spreadsheet import with row-level validation and normalized persistence into the same internal launch model. The calculation stream delivered monthly DRE summaries, compact indicators, and cost-group transformations without duplicating calculation logic. During merge coordination, the main integration issue was a conflict in `src/index.js`, resolved by preserving both ingestion exports and monthly-summary exports. Stage 2 closed with all four tasks completed and merged, leaving Stage 3 ready to start with month status and approval controls.
+
+**Task Logs:**
+- task-02-01.log.md
+- task-02-02.log.md
+- task-02-03.log.md
+- task-02-04.log.md
+

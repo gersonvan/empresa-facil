@@ -8,14 +8,14 @@ title: EmpresaFacil
 
 **Stage 1:** Complete
 
-**Stage 2:**
+**Stage 2:** Complete
+
+**Stage 3:**
 
 | Task | Status | Agent | Branch |
 |------|--------|-------|--------|
-| 2.1 | Done | ux-ui-agent | |
-| 2.2 | Done | application-agent | |
-| 2.3 | Done | calculation-agent | |
-| 2.4 | Active | ux-ui-agent | feat/screen-implementation-prototypes |
+| 3.1 | Active | application-agent | feat/month-review-status-controls |
+| 3.2 | Waiting: 3.1 | calculation-agent | |
 
 ## Worker Tracking
 
@@ -37,4 +37,5 @@ title: EmpresaFacil
 - Normalized missing `.apm/bus/calculation-agent/handoff.md` after Task 1.3 important finding.
 - Stage 1 completed and Stage 2 started with parallel dispatch for 2.1, 2.2, and 2.3.
 - Stage 2 reports for 2.1, 2.2, and 2.3 reviewed as Success and merged.
+- Stage 2 completed after successful review and merge of Task 2.4.
 
