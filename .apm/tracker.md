@@ -12,7 +12,9 @@ title: EmpresaFacil
 |------|--------|-------|--------|
 | 1.1 | Done | ux-ui-agent | |
 | 1.2 | Done | application-agent | |
-| 1.3 | Active | calculation-agent | feat/dre-tax-calculation-contract |
+| 1.3 | Done | calculation-agent | |
+| 1.4 | Active | ux-ui-agent | feat/design-tokens-theming |
+| 1.5 | Waiting: 1.4 | ux-ui-agent | |
 
 ## Worker Tracking
 
@@ -20,7 +22,7 @@ title: EmpresaFacil
 |-------|----------|-------|
 | ux-ui-agent | 1 | Initialized |
 | application-agent | 1 | Initialized |
-| calculation-agent | 0 | Uninitialized |
+| calculation-agent | 1 | Initialized |
 
 ## Version Control
 
@@ -30,4 +32,6 @@ title: EmpresaFacil
 
 ## Working Notes
 - User requested APM artifacts to be synchronized in version control.
+- Planner updated Plan with design adaptation tasks (1.4, 1.5, 2.4).
+- Normalized missing `.apm/bus/calculation-agent/handoff.md` after Task 1.3 important finding.
 

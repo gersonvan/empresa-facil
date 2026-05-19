@@ -1,6 +1,6 @@
 ---
 title: EmpresaFacil
-modified: Plan creation by the Planner.
+modified: Plan updated for design adaptation tasks by the Planner.
 ---
 
 # APM Plan
@@ -17,35 +17,83 @@ modified: Plan creation by the Planner.
 
 | Stage | Name | Tasks | Agents |
 |---|---|---|---|
-| Stage 1 | Product foundation and data flows | 3 | UX/UI Agent, Application Agent, Calculation Agent |
-| Stage 2 | Daily capture and DRE visibility | 3 | UX/UI Agent, Application Agent, Calculation Agent |
+| Stage 1 | Product foundation and data flows | 5 | UX/UI Agent, Application Agent, Calculation Agent |
+| Stage 2 | Daily capture and DRE visibility | 4 | UX/UI Agent, Application Agent, Calculation Agent |
 | Stage 3 | Monthly close and tax support | 2 | Application Agent, Calculation Agent, UX/UI Agent |
 
-## Dependency Graph
+## Updated Plan for Design Adaptation
+
+### New Tasks for Design Integration
+
+#### Task 1.4: Design Tokens and Theming - UX/UI Agent
+
+* **Objective:** Implement the design tokens (colors, typography, spacing) and theming system based on the provided high-fidelity prototypes.
+* **Output:** A reusable theming system supporting light and dark modes, aligned with the design tokens.
+* **Validation:** Tokens are applied consistently across all components, and the theming system can toggle between light and dark modes without visual inconsistencies.
+* **Guidance:** Use the tokens defined in the design files as the source of truth. Ensure accessibility standards are met for contrast and readability.
+* **Dependencies:** Task 1.1 (Responsive shell and navigation).
+
+1. Extract and define design tokens from the provided prototypes.
+2. Implement a theming system that applies these tokens globally.
+3. Validate the visual consistency and accessibility of the themes.
+
+#### Task 1.5: Component Library Setup - UX/UI Agent
+
+* **Objective:** Recreate the base UI components (e.g., buttons, inputs, cards) using the design system and tokens.
+* **Output:** A library of reusable components that adhere to the design specifications.
+* **Validation:** Components match the design prototypes pixel-perfectly and are responsive.
+* **Guidance:** Focus on modularity and reusability. Ensure components are accessible and optimized for both desktop and mobile.
+* **Dependencies:** Task 1.4 (Design Tokens and Theming).
+
+1. Build the base components (buttons, inputs, etc.) using the design tokens.
+2. Ensure components are responsive and accessible.
+3. Validate the components against the design prototypes.
+
+#### Task 2.4: Screen Implementation - UX/UI Agent
+
+* **Objective:** Implement the main screens (dashboard, DRE view, month-close) based on the design prototypes.
+* **Output:** Fully functional screens integrated with the existing application framework.
+* **Validation:** Screens are visually consistent with the prototypes and functionally integrated with the backend.
+* **Guidance:** Use the component library for consistency. Ensure screens are optimized for performance and usability.
+* **Dependencies:** Task 1.5 (Component Library Setup).
+
+1. Implement the dashboard screen with KPIs and quick actions.
+2. Build the DRE view with interactive elements.
+3. Create the month-close screen with status and approval controls.
+
+---
+
+### Updated Dependency Graph
 
 ```mermaid
 graph TB
 
 subgraph S1["Stage 1: Product foundation and data flows"]
-	direction LR
-	T1_1["1.1 Responsive shell and navigation<br/><i>UX/UI Agent</i>"]
-	T1_2["1.2 Core data model and multi-company workflow<br/><i>Application Agent</i>"]
-	T1_3["1.3 DRE and tax calculation contract<br/><i>Calculation Agent</i>"]
+    direction LR
+    T1_1["1.1 Responsive shell and navigation<br/><i>UX/UI Agent</i>"]
+    T1_2["1.2 Core data model and multi-company workflow<br/><i>Application Agent</i>"]
+    T1_3["1.3 DRE and tax calculation contract<br/><i>Calculation Agent</i>"]
+    T1_4["1.4 Design Tokens and Theming<br/><i>UX/UI Agent</i>"]
+    T1_5["1.5 Component Library Setup<br/><i>UX/UI Agent</i>"]
 end
 
 subgraph S2["Stage 2: Daily capture and DRE visibility"]
-	direction LR
-	T2_1["2.1 Fast launch forms and guided daily flow<br/><i>UX/UI Agent</i>"]
-	T2_2["2.2 Manual entry and spreadsheet import pipeline<br/><i>Application Agent</i>"]
-	T2_3["2.3 Monthly DRE summary and main indicators<br/><i>Calculation Agent</i>"]
+    direction LR
+    T2_1["2.1 Fast launch forms and guided daily flow<br/><i>UX/UI Agent</i>"]
+    T2_2["2.2 Manual entry and spreadsheet import pipeline<br/><i>Application Agent</i>"]
+    T2_3["2.3 Monthly DRE summary and main indicators<br/><i>Calculation Agent</i>"]
+    T2_4["2.4 Screen Implementation<br/><i>UX/UI Agent</i>"]
 end
 
 subgraph S3["Stage 3: Monthly close and tax support"]
-	direction LR
-	T3_1["3.1 Month review, status, and approval controls<br/><i>Application Agent</i>"]
-	T3_2["3.2 Versioned Simples Nacional support and audit trail<br/><i>Calculation Agent</i>"]
+    direction LR
+    T3_1["3.1 Month review, status, and approval controls<br/><i>Application Agent</i>"]
+    T3_2["3.2 Versioned Simples Nacional support and audit trail<br/><i>Calculation Agent</i>"]
 end
 
+T1_1 --> T1_4
+T1_4 --> T1_5
+T1_5 --> T2_4
 T1_1 --> T2_1
 T1_2 --> T2_2
 T1_3 --> T2_3
@@ -57,9 +105,12 @@ T2_3 -.-> T3_2
 style T1_1 fill:#8ecae6,color:#000
 style T1_2 fill:#ffb703,color:#000
 style T1_3 fill:#90be6d,color:#000
+style T1_4 fill:#8ecae6,color:#000
+style T1_5 fill:#8ecae6,color:#000
 style T2_1 fill:#8ecae6,color:#000
 style T2_2 fill:#ffb703,color:#000
 style T2_3 fill:#90be6d,color:#000
+style T2_4 fill:#8ecae6,color:#000
 style T3_1 fill:#ffb703,color:#000
 style T3_2 fill:#90be6d,color:#000
 ```
@@ -112,6 +163,30 @@ This stage establishes the minimum foundation needed for all later work: a respo
 2. Implement repeatable aggregation logic for revenue, deductions, expenses, financial income, and operating result.
 3. Expose a calculation payload that later UI and review screens can render directly.
 
+### Task 1.4: Design Tokens and Theming - UX/UI Agent
+
+* **Objective:** Implement the design tokens (colors, typography, spacing) and theming system based on the provided high-fidelity prototypes.
+* **Output:** A reusable theming system supporting light and dark modes, aligned with the design tokens.
+* **Validation:** Tokens are applied consistently across all components, and the theming system can toggle between light and dark modes without visual inconsistencies.
+* **Guidance:** Use the tokens defined in the design files as the source of truth. Ensure accessibility standards are met for contrast and readability.
+* **Dependencies:** Task 1.1 (Responsive shell and navigation).
+
+1. Extract and define design tokens from the provided prototypes.
+2. Implement a theming system that applies these tokens globally.
+3. Validate the visual consistency and accessibility of the themes.
+
+### Task 1.5: Component Library Setup - UX/UI Agent
+
+* **Objective:** Recreate the base UI components (e.g., buttons, inputs, cards) using the design system and tokens.
+* **Output:** A library of reusable components that adhere to the design specifications.
+* **Validation:** Components match the design prototypes pixel-perfectly and are responsive.
+* **Guidance:** Focus on modularity and reusability. Ensure components are accessible and optimized for both desktop and mobile.
+* **Dependencies:** Task 1.4 (Design Tokens and Theming).
+
+1. Build the base components (buttons, inputs, etc.) using the design tokens.
+2. Ensure components are responsive and accessible.
+3. Validate the components against the design prototypes.
+
 ## Stage 2: Daily capture and DRE visibility
 
 This stage delivers the daily usage loop: quick entry, batch import, and a usable DRE summary. The tasks are separated because the launch experience, import handling, and DRE presentation can be validated against the same data contract but should fail independently if one area regresses.
@@ -151,6 +226,18 @@ This stage delivers the daily usage loop: quick entry, batch import, and a usabl
 1. Transform calculation outputs into monthly summary data and the compact indicator set.
 2. Align the DRE view with the simplified reporting structure.
 3. Verify the same summary data can power both the dashboard and the report view.
+
+### Task 2.4: Screen Implementation - UX/UI Agent
+
+* **Objective:** Implement the main screens (dashboard, DRE view, month-close) based on the design prototypes.
+* **Output:** Fully functional screens integrated with the existing application framework.
+* **Validation:** Screens are visually consistent with the prototypes and functionally integrated with the backend.
+* **Guidance:** Use the component library for consistency. Ensure screens are optimized for performance and usability.
+* **Dependencies:** Task 1.5 (Component Library Setup).
+
+1. Implement the dashboard screen with KPIs and quick actions.
+2. Build the DRE view with interactive elements.
+3. Create the month-close screen with status and approval controls.
 
 ## Stage 3: Monthly close and tax support
 
