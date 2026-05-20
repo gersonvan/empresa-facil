@@ -326,38 +326,38 @@ class EventStore {
   async exportBackup() {
     const client = await this.pool.connect();
     try {
-      const [eventsResult, projectionResult, syncResult] = await Promise.all([
-        client.query(
-          `
-            SELECT
-              id,
-              aggregate_id,
-              aggregate_type,
-              event_timestamp_ms,
-              device_id,
-              event_type,
-              event_version,
-              payload,
-              reason,
-              user_id,
-              synced_at_ms
-            FROM audit_events
-            ORDER BY synced_at_ms ASC, id ASC
-          `
-        ),
-        client.query(
-          `
-            SELECT aggregate_id, aggregate_type, winner_event_id, winner_timestamp_ms, winner_device_id, snapshot, updated_at
-            FROM aggregate_projection_state
-          `
-        ),
-        client.query(
-          `
-            SELECT device_id, last_sync_checkpoint_ms, last_event_id, last_push_at, last_pull_at
-            FROM device_sync_metadata
-          `
-        ),
-      ]);
+      const eventsResult = await client.query(
+        `
+          SELECT
+            id,
+            aggregate_id,
+            aggregate_type,
+            event_timestamp_ms,
+            device_id,
+            event_type,
+            event_version,
+            payload,
+            reason,
+            user_id,
+            synced_at_ms
+          FROM audit_events
+          ORDER BY synced_at_ms ASC, id ASC
+        `
+      );
+
+      const projectionResult = await client.query(
+        `
+          SELECT aggregate_id, aggregate_type, winner_event_id, winner_timestamp_ms, winner_device_id, snapshot, updated_at
+          FROM aggregate_projection_state
+        `
+      );
+
+      const syncResult = await client.query(
+        `
+          SELECT device_id, last_sync_checkpoint_ms, last_event_id, last_push_at, last_pull_at
+          FROM device_sync_metadata
+        `
+      );
 
       const exportedAt = Date.now();
       const payload = {
