@@ -1,0 +1,107 @@
+.filtersCard {
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.filtersGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.field input,
+.field select {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.kpiGrid {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.kpiLabel {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.kpiValue {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.emptyState {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+}
+
+.rowInfo {
+  min-width: 0;
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.rowMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.rowAmount {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+@media (min-width: 900px) {
+  .filtersGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

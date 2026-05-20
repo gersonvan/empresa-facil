@@ -1,17 +1,17 @@
 ---
 title: EmpresaFacil
-completed_at: 2026-05-19T19:40:24Z
+updated_at: 2026-05-20T12:00:00Z
 ---
 
 # APM Tracker
 
 ## Task Tracking
 
-**Stage 1:** Complete
+**Stage 1:** In Progress
 
-**Stage 2:** Complete
+**Stage 2:** Not Started
 
-**Stage 3:** Complete
+**Stage 3:** Not Started
 
 ## Worker Tracking
 
@@ -30,10 +30,8 @@ completed_at: 2026-05-19T19:40:24Z
 ## Working Notes
 - User requested APM artifacts to be synchronized in version control.
 - Planner updated Plan with design adaptation tasks (1.4, 1.5, 2.4).
-- Normalized missing `.apm/bus/calculation-agent/handoff.md` after Task 1.3 important finding.
-- Stage 1 completed and Stage 2 started with parallel dispatch for 2.1, 2.2, and 2.3.
-- Stage 2 reports for 2.1, 2.2, and 2.3 reviewed as Success and merged.
-- Stage 2 completed after successful review and merge of Task 2.4.
-- Task 3.1 reviewed as Success; lifecycle controls are present in main and Stage 3 advanced to 3.2.
-- Task 3.2 reviewed as Success and merged; all stages completed.
+- Planner added Task 1.6 for Node.js + PostgreSQL backend sync architecture.
+- Tracker reopened to reflect pending execution on revised scope.
+- Current implementation baseline is frontend-first (React/Vite with local persistence) and does not yet implement Task 1.6 backend/sync stack.
+- New requirement baseline includes Fastify + PostgreSQL, event-sourced audit log, and offline sync protocol from `.apm/data-architecture.md`.
 

@@ -4,6 +4,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import { createLaunchEntry } from '../domain'
 import { toIngestionRecord } from '../contracts'
 import { monthLifecycleStore } from '../monthLifecycle'
+import { saveLaunchEntry } from '../launchStore'
 import { Button, Card, Input } from '../components/ui'
 import styles from './Launch.module.css'
 
@@ -97,6 +98,7 @@ export default function Launch() {
 
     // Keep payload compatibility visible in UI for manual and import parity.
     const ingestionRecord = toIngestionRecord(entry)
+    saveLaunchEntry(entry)
     setSavedEntryId(String(ingestionRecord.source_id))
     setStatusMessage('')
 

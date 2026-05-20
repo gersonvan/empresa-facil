@@ -6,6 +6,7 @@ import {
   type MonthlyOverview,
 } from '../calculations'
 import { monthLifecycleStore } from '../monthLifecycle'
+import { listLaunchLines } from '../launchStore'
 
 const COMPANY_ID = 'company-main'
 const COMPANY_NAME = 'Empresa Principal'
@@ -84,7 +85,7 @@ export function getMonthlyOverview(): MonthlyOverview {
   const calculation = calculateVersionedSimplesSupport({
     companyId: COMPANY_ID,
     month: MONTH,
-    lines: monthlyLines,
+    lines: [...monthlyLines, ...listLaunchLines({ companyId: COMPANY_ID, month: MONTH })],
     ruleCatalog: fiscalRuleCatalog,
     ruleVersion: '2026.05',
     monthLifecycle: lifecycleSnapshot,

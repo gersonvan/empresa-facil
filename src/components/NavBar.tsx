@@ -4,8 +4,10 @@ import styles from './NavBar.module.css'
 const navItems = [
   { path: '/dashboard', label: 'Início' },
   { path: '/launch', label: 'Lançar' },
+  { path: '/records', label: 'Registros' },
   { path: '/dre', label: 'DRE' },
   { path: '/month-review', label: 'Mês' },
+  { path: '/training', label: 'Treino' },
 ]
 
 export default function NavBar() {

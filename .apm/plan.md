@@ -10,14 +10,14 @@ modified: Plan updated for design adaptation tasks by the Planner.
 | Worker | Domain | Description |
 |---|---|---|
 | UX/UI Agent | Experience and presentation | Builds the responsive interface, daily workflow, dashboard, DRE views, and all user-facing simplicity patterns. |
-| Application Agent | Data and workflow services | Builds persistence, multi-company data handling, launch intake, spreadsheet import, month status handling, and shared application flows. |
+| Application Agent | Data and workflow services | Builds persistence, multi-company data handling, launch intake, spreadsheet import, month status handling, backend sync engine, and shared application flows. |
 | Calculation Agent | DRE and tax support | Builds DRE aggregation, cost group summaries, Simples Nacional support calculations, and versioned rule handling. |
 
 ## Stages
 
 | Stage | Name | Tasks | Agents |
 |---|---|---|---|
-| Stage 1 | Product foundation and data flows | 5 | UX/UI Agent, Application Agent, Calculation Agent |
+| Stage 1 | Product foundation and data flows | 6 | UX/UI Agent, Application Agent, Calculation Agent |
 | Stage 2 | Daily capture and DRE visibility | 4 | UX/UI Agent, Application Agent, Calculation Agent |
 | Stage 3 | Monthly close and tax support | 2 | Application Agent, Calculation Agent, UX/UI Agent |
 
@@ -75,6 +75,7 @@ subgraph S1["Stage 1: Product foundation and data flows"]
     T1_3["1.3 DRE and tax calculation contract<br/><i>Calculation Agent</i>"]
     T1_4["1.4 Design Tokens and Theming<br/><i>UX/UI Agent</i>"]
     T1_5["1.5 Component Library Setup<br/><i>UX/UI Agent</i>"]
+    T1_6["1.6 Event-Sourced Backend & Sync<br/><i>Application Agent</i>"]
 end
 
 subgraph S2["Stage 2: Daily capture and DRE visibility"]
@@ -95,8 +96,11 @@ T1_1 --> T1_4
 T1_4 --> T1_5
 T1_5 --> T2_4
 T1_1 --> T2_1
+T1_2 --> T1_6
+T1_3 --> T1_6
 T1_2 --> T2_2
 T1_3 --> T2_3
+T1_6 --> T2_2
 T2_1 --> T3_1
 T2_2 -.-> T3_1
 T2_2 --> T3_2
@@ -107,6 +111,7 @@ style T1_2 fill:#ffb703,color:#000
 style T1_3 fill:#90be6d,color:#000
 style T1_4 fill:#8ecae6,color:#000
 style T1_5 fill:#8ecae6,color:#000
+style T1_6 fill:#ffb703,color:#000
 style T2_1 fill:#8ecae6,color:#000
 style T2_2 fill:#ffb703,color:#000
 style T2_3 fill:#90be6d,color:#000
@@ -186,6 +191,21 @@ This stage establishes the minimum foundation needed for all later work: a respo
 1. Build the base components (buttons, inputs, etc.) using the design tokens.
 2. Ensure components are responsive and accessible.
 3. Validate the components against the design prototypes.
+
+### Task 1.6: Event-Sourced Backend and Sync Engine - Application Agent
+
+* **Objective:** Build the Node.js backend (Fastify + PostgreSQL) with event-sourced persistence, offline-first sync protocol, and audit trail support.
+* **Output:** RESTful sync APIs (push/pull), event store, conflict resolution, backup/export, and deployment-ready server.
+* **Validation:** The backend can accept event batches from offline clients, resolve conflicts deterministically, persist events with audit metadata, and serve synced state back to clients. Sync operations work correctly under network latency and offline scenarios.
+* **Guidance:** Implement the architecture defined in `.apm/data-architecture.md`. Use PostgreSQL for durability and JSONB for flexible event payloads. Keep the sync protocol stateless and repeatable so clients can resync without loss. Preserve the full event log for auditability even after projections are computed. Design for multi-user scale (future); for MVP, user context is optional but the schema should support it.
+* **Dependencies:** **Task 1.2 by Application Agent, Task 1.3 by Calculation Agent**.
+
+1. Set up Node.js project (Fastify, TypeORM/Prisma, PostgreSQL).
+2. Implement the event store schema and append-only writes.
+3. Build sync endpoints (POST /sync/push, GET /sync/pull).
+4. Implement conflict resolution and merge logic.
+5. Add backup/export and import endpoints.
+6. Set up PostgreSQL migrations and connection pooling.
 
 ## Stage 2: Daily capture and DRE visibility
 

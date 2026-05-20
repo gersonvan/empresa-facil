@@ -6,6 +6,7 @@ title: EmpresaFacil
 
 ## Memory Notes
 - Design artifacts under `design/` became the source of truth for token/theme direction and component style alignment.
+- Reopened scope introduces a backend/sync critical path (Fastify + PostgreSQL + event-sourced sync); frontend-only progress is insufficient for revised acceptance.
 
 ## Stage Summaries
 
