@@ -7,7 +7,7 @@ updated_at: 2026-05-20T12:00:00Z
 
 ## Task Tracking
 
-**Stage 1:** In Progress
+**Stage 1:** Complete
 
 **Stage 2:** Not Started
 
@@ -32,6 +32,6 @@ updated_at: 2026-05-20T12:00:00Z
 - Planner updated Plan with design adaptation tasks (1.4, 1.5, 2.4).
 - Planner added Task 1.6 for Node.js + PostgreSQL backend sync architecture.
 - Tracker reopened to reflect pending execution on revised scope.
-- Current implementation baseline is frontend-first (React/Vite with local persistence) and does not yet implement Task 1.6 backend/sync stack.
+- Task 1.6 reviewed as Success; backend sync foundation is now implemented on `feat/backend-sync-engine` and validated with backend tests.
 - New requirement baseline includes Fastify + PostgreSQL, event-sourced audit log, and offline sync protocol from `.apm/data-architecture.md`.
 
