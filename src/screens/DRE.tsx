@@ -1,10 +1,61 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
+import { useNavigate } from 'react-router-dom'
 import { formatCurrency, formatPercent, getMonthlyOverview } from './financialOverview'
 import styles from './DRE.module.css'
 
 export default function DRE() {
+  const navigate = useNavigate()
   const overview = getMonthlyOverview()
+
+  function downloadTextFile({ content, fileName, mimeType }: { content: string; fileName: string; mimeType: string }) {
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = fileName
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportSummaryJson() {
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      summary: overview.summary,
+      indicators: overview.indicators,
+      costGroups: overview.costGroups,
+      taxSupport: overview.taxSupport,
+    }
+
+    downloadTextFile({
+      content: JSON.stringify(payload, null, 2),
+      fileName: `dre-resumo-${overview.summary.month}.json`,
+      mimeType: 'application/json',
+    })
+  }
+
+  function exportSummaryCsv() {
+    const csvRows = [
+      ['mes', overview.summary.month],
+      ['regra_fiscal', overview.summary.taxRuleVersion],
+      ['receita', String(overview.summary.revenue)],
+      ['deducoes', String(overview.summary.deductions)],
+      ['despesas', String(overview.summary.expenses)],
+      ['receita_financeira', String(overview.summary.financialIncome)],
+      ['resultado_operacional', String(overview.summary.operatingResult)],
+      ['margem_liquida_percent', String(overview.indicators.netMarginPercent ?? '')],
+      ['carga_tributaria_percent', String(overview.indicators.taxBurdenPercent ?? '')],
+      ['estimativa_tributos', String(overview.taxSupport.estimatedTax ?? '')],
+    ]
+
+    const csv = ['campo,valor', ...csvRows.map(([field, value]) => `${field},"${String(value).replace(/"/g, '""')}"`)].join('\n')
+
+    downloadTextFile({
+      content: csv,
+      fileName: `dre-resumo-${overview.summary.month}.csv`,
+      mimeType: 'text/csv;charset=utf-8',
+    })
+  }
 
   return (
     <ScreenContainer title="DRE">
@@ -47,8 +98,9 @@ export default function DRE() {
             ))}
           </ul>
           <div className={styles.actions}>
-            <Button size="sm" variant="secondary">Exportar resumo</Button>
-            <Button size="sm" variant="outline">Abrir fechamento</Button>
+            <Button size="sm" variant="secondary" onClick={exportSummaryJson}>Exportar resumo (JSON)</Button>
+            <Button size="sm" variant="secondary" onClick={exportSummaryCsv}>Exportar resumo (CSV)</Button>
+            <Button size="sm" variant="outline" onClick={() => navigate('/month-review')}>Abrir fechamento</Button>
           </div>
         </Card>
       </div>

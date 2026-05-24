@@ -56,6 +56,47 @@
   font-size: 14px;
 }
 
+.warning {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.message {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.editCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface-soft);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.editTitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.editGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.editActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -96,6 +137,17 @@
   color: var(--color-text-primary);
 }
 
+.rowTail {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+}
+
 @media (min-width: 900px) {
   .filtersGrid {
     grid-template-columns: 1fr 1fr;
@@ -103,5 +155,9 @@
 
   .kpiGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .editGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

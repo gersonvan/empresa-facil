@@ -1,11 +1,22 @@
 import { useMemo, useState } from 'react'
 import ScreenContainer from '../components/ScreenContainer'
-import { Card } from '../components/ui'
+import { Card, Button, Input } from '../components/ui'
+import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { formatCurrency, getMonthContext } from './financialOverview'
-import { listLaunchEntries } from '../launchStore'
+import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, updateLaunchEntry } from '../launchStore'
+import { monthLifecycleStore } from '../monthLifecycle'
 import styles from './Records.module.css'
 
 type CostTypeFilter = 'all' | 'company' | 'personal'
+
+interface EditState {
+  entryId: string
+  costType: CostType
+  dreGroup: DreGroup
+  categoryId: string
+  description: string
+  amount: string
+}
 
 function monthFromNow() {
   const now = new Date()
@@ -21,6 +32,8 @@ export default function Records() {
   const monthContext = getMonthContext()
   const [monthFilter, setMonthFilter] = useState(monthFromNow())
   const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>('all')
+  const [editState, setEditState] = useState<EditState | null>(null)
+  const [message, setMessage] = useState('')
 
   const entries = useMemo(
     () =>
@@ -31,6 +44,14 @@ export default function Records() {
       }),
     [costTypeFilter, monthContext.companyId, monthFilter]
   )
+
+  const availableCategories = useMemo(() => {
+    if (!editState) {
+      return []
+    }
+
+    return listCategories({ costType: editState.costType, dreGroup: editState.dreGroup })
+  }, [editState])
 
   const summary = useMemo(() => {
     return entries.reduce(
@@ -46,6 +67,102 @@ export default function Records() {
       { total: 0, company: 0, personal: 0 }
     )
   }, [entries])
+
+  function canMutateEntry(month: string) {
+    return !monthLifecycleStore.isMonthClosed({ companyId: monthContext.companyId, month })
+  }
+
+  function openEdit(entryId: string) {
+    const entry = getLaunchEntryById(entryId)
+    if (!entry) {
+      setMessage('Lançamento não encontrado para edição.')
+      return
+    }
+
+    if (!canMutateEntry(entry.month)) {
+      setMessage('Mês fechado: este lançamento não pode ser editado ou removido.')
+      return
+    }
+
+    setEditState({
+      entryId: entry.id,
+      costType: entry.costType,
+      dreGroup: entry.dreGroup,
+      categoryId: entry.categoryId,
+      description: entry.description,
+      amount: String(entry.amount).replace('.', ','),
+    })
+    setMessage('')
+  }
+
+  function saveEdit() {
+    if (!editState) {
+      return
+    }
+
+    const amount = Number(editState.amount.replace(',', '.'))
+    if (!editState.description.trim() || Number.isNaN(amount) || amount <= 0) {
+      setMessage('Preencha descrição e valor maior que zero para salvar.')
+      return
+    }
+
+    const category = listCategories({ costType: editState.costType, dreGroup: editState.dreGroup }).find(
+      (item) => item.id === editState.categoryId
+    )
+    if (!category) {
+      setMessage('Escolha uma categoria válida para salvar.')
+      return
+    }
+
+    const original = getLaunchEntryById(editState.entryId)
+    if (!original) {
+      setMessage('Lançamento não encontrado para salvar.')
+      return
+    }
+
+    if (!canMutateEntry(original.month)) {
+      setMessage('Mês fechado: este lançamento não pode mais ser editado.')
+      return
+    }
+
+    updateLaunchEntry(editState.entryId, {
+      costType: editState.costType,
+      dreGroup: editState.dreGroup,
+      categoryId: category.id,
+      categoryName: category.name,
+      description: editState.description.trim(),
+      amount,
+    })
+
+    setEditState(null)
+    setMessage('Lançamento atualizado com sucesso.')
+  }
+
+  function removeEntry(entryId: string) {
+    const entry = getLaunchEntryById(entryId)
+    if (!entry) {
+      setMessage('Lançamento não encontrado para remoção.')
+      return
+    }
+
+    if (!canMutateEntry(entry.month)) {
+      setMessage('Mês fechado: este lançamento não pode ser removido.')
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Tem certeza que deseja remover o lançamento "${entry.description}"? Esta ação não poderá ser desfeita.`
+    )
+    if (!confirmed) {
+      return
+    }
+
+    removeLaunchEntry(entryId)
+    if (editState?.entryId === entryId) {
+      setEditState(null)
+    }
+    setMessage('Lançamento removido com sucesso.')
+  }
 
   return (
     <ScreenContainer title="Ver Registros">
@@ -93,6 +210,118 @@ export default function Records() {
 
       <Card>
         <h2 className={styles.sectionTitle}>Lançamentos</h2>
+        <p className={styles.warning}>Atenção: após o fechamento do mês, edição e remoção ficam bloqueadas.</p>
+        {message ? <p className={styles.message}>{message}</p> : null}
+
+        {editState ? (
+          <div className={styles.editCard}>
+            <h3 className={styles.editTitle}>Editar lançamento</h3>
+            <div className={styles.editGrid}>
+              <label className={styles.field} htmlFor="edit-type">
+                <span>Tipo</span>
+                <select
+                  id="edit-type"
+                  value={editState.costType}
+                  onChange={(event) =>
+                    setEditState((current) =>
+                      current
+                        ? {
+                            ...current,
+                            costType: event.target.value as CostType,
+                            categoryId: '',
+                          }
+                        : current
+                    )
+                  }
+                >
+                  <option value="company">Empresa</option>
+                  <option value="personal">Pessoal</option>
+                </select>
+              </label>
+              <label className={styles.field} htmlFor="edit-group">
+                <span>Natureza</span>
+                <select
+                  id="edit-group"
+                  value={editState.dreGroup}
+                  onChange={(event) =>
+                    setEditState((current) =>
+                      current
+                        ? {
+                            ...current,
+                            dreGroup: event.target.value as DreGroup,
+                            categoryId: '',
+                          }
+                        : current
+                    )
+                  }
+                >
+                  <option value="revenue">Receita</option>
+                  <option value="expenses">Despesa</option>
+                </select>
+              </label>
+              <label className={styles.field} htmlFor="edit-category">
+                <span>Categoria</span>
+                <select
+                  id="edit-category"
+                  value={editState.categoryId}
+                  onChange={(event) =>
+                    setEditState((current) =>
+                      current
+                        ? {
+                            ...current,
+                            categoryId: event.target.value,
+                          }
+                        : current
+                    )
+                  }
+                >
+                  <option value="">Selecione...</option>
+                  {availableCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Input
+                label="Descrição"
+                value={editState.description}
+                onChange={(event) =>
+                  setEditState((current) =>
+                    current
+                      ? {
+                          ...current,
+                          description: event.target.value,
+                        }
+                      : current
+                  )
+                }
+              />
+              <Input
+                label="Valor"
+                inputMode="decimal"
+                value={editState.amount}
+                onChange={(event) =>
+                  setEditState((current) =>
+                    current
+                      ? {
+                          ...current,
+                          amount: event.target.value,
+                        }
+                      : current
+                  )
+                }
+              />
+            </div>
+            <div className={styles.editActions}>
+              <Button size="sm" onClick={saveEdit}>Salvar alterações</Button>
+              <Button size="sm" variant="outline" onClick={() => setEditState(null)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         {entries.length === 0 ? (
           <p className={styles.emptyState}>Nenhum lançamento encontrado para os filtros atuais.</p>
         ) : (
@@ -102,10 +331,20 @@ export default function Records() {
                 <div className={styles.rowInfo}>
                   <p className={styles.rowTitle}>{entry.description}</p>
                   <p className={styles.rowMeta}>
-                    {costTypeLabel(entry.costType)} · {entry.month}
+                    {costTypeLabel(entry.costType)} · {entry.dreGroup === 'revenue' ? 'Receita' : 'Despesa'} · {entry.categoryName} · {entry.month}
                   </p>
                 </div>
-                <strong className={styles.rowAmount}>{formatCurrency(entry.amount)}</strong>
+                <div className={styles.rowTail}>
+                  <strong className={styles.rowAmount}>{formatCurrency(entry.amount)}</strong>
+                  <div className={styles.rowActions}>
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(entry.id)} disabled={!canMutateEntry(entry.month)}>
+                      Editar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => removeEntry(entry.id)} disabled={!canMutateEntry(entry.month)}>
+                      Remover
+                    </Button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

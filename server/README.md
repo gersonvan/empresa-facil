@@ -78,3 +78,34 @@ npm test
 ```
 
 Includes migration execution test using `pg-mem` and conflict-resolution deterministic behavior checks.
+
+## Run with Docker (local)
+
+From project root, start PostgreSQL + sync backend:
+
+```bash
+docker compose up -d --build
+```
+
+Verify services:
+
+```bash
+docker compose ps
+curl http://127.0.0.1:3333/health
+curl http://127.0.0.1:3333/ready
+
+# reusable sync smoke test from project root
+npm run smoke:sync
+```
+
+Stop services:
+
+```bash
+docker compose down
+```
+
+Stop and remove database volume (clean state):
+
+```bash
+docker compose down -v
+```

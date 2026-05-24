@@ -64,6 +64,33 @@
   gap: 12px;
 }
 
+.selectField {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.selectField select {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.selectError {
+  border-color: var(--color-danger, #dc2626) !important;
+}
+
+.selectErrorText {
+  font-size: 12px;
+  color: var(--color-danger, #dc2626);
+  font-weight: 700;
+}
+
 .optionalDetails {
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-button);
