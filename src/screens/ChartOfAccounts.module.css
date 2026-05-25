@@ -2,6 +2,14 @@
   margin-bottom: 12px;
 }
 
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .sectionTitle {
   margin: 0 0 10px;
   font-size: 15px;
@@ -15,9 +23,57 @@
   color: var(--color-text-secondary);
 }
 
+.message {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
 .grid {
   display: grid;
   gap: 10px;
+}
+
+.groupCard {
+  display: grid;
+  gap: 10px;
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.toolbar {
+  display: grid;
+  gap: 8px;
+}
+
+.toolbarAddRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbarHint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.select {
+  min-width: 220px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  padding: 10px 12px;
 }
 
 .list {
@@ -31,11 +87,18 @@
 .row {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-button);
-  padding: 8px 10px;
+  padding: 10px 12px;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: 58px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
+  background: var(--color-surface);
+  cursor: grab;
+}
+
+.rowSelected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 
 .code {
@@ -50,14 +113,52 @@
   font-weight: 600;
 }
 
+.dragHint {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
 .emptyText {
   margin: 0;
   font-size: 13px;
   color: var(--color-text-secondary);
 }
 
+.footerCard {
+  margin-top: 12px;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.summaryItem {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.summaryValue {
+  font-size: 20px;
+  color: var(--color-text-primary);
+}
+
+.summaryLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
 @media (min-width: 900px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

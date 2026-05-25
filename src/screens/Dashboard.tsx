@@ -1,12 +1,31 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import { useNavigate } from 'react-router-dom'
-import { formatCurrency, getMonthlyOverview } from './financialOverview'
+import { formatCurrency, getMonthContext, getMonthlyOverview } from './financialOverview'
+import { listLaunchEntries } from '../launchStore'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const overview = getMonthlyOverview()
+  const monthContext = getMonthContext()
+
+  const topCategoryExpenses = listLaunchEntries({
+    companyId: monthContext.companyId,
+    month: monthContext.month,
+    costType: 'all',
+  })
+    .filter((entry) => entry.dreGroup === 'expenses')
+    .reduce<Map<string, number>>((accumulator, entry) => {
+      const current = accumulator.get(entry.categoryName) ?? 0
+      accumulator.set(entry.categoryName, current + entry.amount)
+      return accumulator
+    }, new Map())
+
+  const topCategoryRows = Array.from(topCategoryExpenses.entries())
+    .map(([categoryName, amount]) => ({ categoryName, amount }))
+    .sort((left, right) => right.amount - left.amount)
+    .slice(0, 5)
 
   const indicators = [
     { label: 'Receita', value: formatCurrency(overview.summary.revenue), tone: 'default' },
@@ -51,6 +70,27 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <Card className={styles.categoryCard}>
+        <div className={styles.categoryHeader}>
+          <h2 className={styles.categoryTitle}>Top 5 gastos por categoria</h2>
+          <Button size="sm" variant="outline" onClick={() => navigate('/category-insights')}>
+            Ver análise completa
+          </Button>
+        </div>
+        {topCategoryRows.length === 0 ? (
+          <p className={styles.categoryEmpty}>Sem despesas por categoria no mês atual.</p>
+        ) : (
+          <ul className={styles.categoryList}>
+            {topCategoryRows.map((row, index) => (
+              <li key={row.categoryName} className={styles.categoryRow}>
+                <span className={styles.categoryName}>#{index + 1} {row.categoryName}</span>
+                <strong className={styles.categoryAmount}>{formatCurrency(row.amount)}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </ScreenContainer>
   )
 }

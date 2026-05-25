@@ -1,18 +1,34 @@
-import { NavLink } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import styles from './NavBar.module.css'
 
 const navItems = [
   { path: '/dashboard', label: 'Início' },
   { path: '/launch', label: 'Lançar' },
-  { path: '/categories', label: 'Categorias' },
-  { path: '/chart-of-accounts', label: 'Plano' },
   { path: '/records', label: 'Registros' },
+  { path: '/category-insights', label: 'Análise' },
+  { path: '/cash-flow-projection', label: 'Projeção' },
   { path: '/dre', label: 'DRE' },
   { path: '/month-review', label: 'Mês' },
+]
+
+const settingsItems = [
+  { path: '/categories', label: 'Categorias' },
+  { path: '/chart-of-accounts', label: 'Plano' },
   { path: '/training', label: 'Treino' },
 ]
 
 export default function NavBar() {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const location = useLocation()
+
+  const isSettingsRouteActive = useMemo(
+    () => settingsItems.some(({ path }) => location.pathname.startsWith(path)),
+    [location.pathname]
+  )
+
+  const shouldShowSettings = settingsOpen || isSettingsRouteActive
+
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.brand}>
@@ -35,6 +51,33 @@ export default function NavBar() {
           {label}
         </NavLink>
       ))}
+
+      <button
+        type="button"
+        className={`${styles.settingsToggle} ${isSettingsRouteActive ? styles.active : ''}`}
+        onClick={() => setSettingsOpen((current) => !current)}
+        aria-expanded={shouldShowSettings}
+        aria-controls="settings-submenu"
+      >
+        Configurações
+      </button>
+
+      {shouldShowSettings ? (
+        <div id="settings-submenu" className={styles.settingsPanel}>
+          {settingsItems.map(({ path, label }) => (
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) =>
+                `${styles.settingsItem} ${isActive ? styles.active : ''}`
+              }
+              onClick={() => setSettingsOpen(false)}
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      ) : null}
     </nav>
   )
 }

@@ -1,0 +1,416 @@
+.controlsCardWrap {
+  margin-bottom: 16px;
+}
+
+.formCard {
+  margin-bottom: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.formTypeButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 8px;
+}
+
+.formTypeButton {
+  min-height: 34px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.formTypeButton.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field > span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.field input,
+.field select {
+  min-height: 38px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  padding: 0 10px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.errorText {
+  font-size: 12px;
+  color: var(--color-negative);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+}
+
+.statusMessage {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-positive);
+}
+
+.statusMessageError {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-negative);
+}
+
+.controlsCard {
+  display: grid;
+  gap: 12px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.controlGroup {
+  display: grid;
+  gap: 6px;
+}
+
+.controlLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.horizonButtons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.horizonButton {
+  min-height: 36px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.horizonButton:hover {
+  border-color: var(--color-border-strong);
+}
+
+.horizonButton.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.selectControl {
+  min-height: 38px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  padding: 0 10px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summaryCard {
+  display: grid;
+  gap: 6px;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.peakCard {
+  margin-bottom: 16px;
+  background: color-mix(in srgb, var(--color-warning) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-warning) 22%, var(--color-border));
+}
+
+.peakHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.peakBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-warning);
+  text-transform: uppercase;
+}
+
+.peakText {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.contextText {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+.peakRow {
+  background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+}
+
+.totalCell {
+  font-weight: 800;
+}
+
+.emptyState {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.commitmentsCard {
+  margin-top: 16px;
+}
+
+.auditCard {
+  margin-top: 16px;
+}
+
+.auditHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.auditControls {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.auditFilterLabel {
+  display: grid;
+  gap: 4px;
+}
+
+.auditFilterLabel > span {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.auditFilterSelect {
+  min-height: 34px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  padding: 0 10px;
+}
+
+.auditList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.auditRow {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.auditSummary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.auditMeta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.commitmentsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.commitmentRow {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.commitmentName {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.commitmentMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.lockedMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-negative);
+}
+
+.commitmentActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.commitmentActionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+@media (min-width: 768px) {
+  .controls {
+    grid-template-columns: 1fr 220px;
+    align-items: end;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .formGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .commitmentRow {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}

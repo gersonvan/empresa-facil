@@ -127,6 +127,7 @@ export default function Categories() {
               }
             >
               <option value="revenue">Receita</option>
+              <option value="deductions">Dedução</option>
               <option value="expenses">Despesa</option>
             </select>
           </label>
@@ -146,14 +147,19 @@ export default function Categories() {
 
       <Card>
         <h2 className={styles.sectionTitle}>Categorias cadastradas</h2>
-        <p className={styles.helper}>Base inicial com categorias comuns de receita/despesa empresariais e pessoais.</p>
+        <p className={styles.helper}>Cadastre categorias de receita, dedução e despesa para empresa e pessoal.</p>
         <ul className={styles.list}>
           {categories.map((category) => (
             <li key={category.id} className={styles.row}>
               <div>
                 <p className={styles.rowTitle}>{category.name}</p>
                 <p className={styles.rowMeta}>
-                  {category.costType === 'company' ? 'Empresa' : 'Pessoal'} · {category.dreGroup === 'revenue' ? 'Receita' : 'Despesa'}
+                  {category.costType === 'company' ? 'Empresa' : 'Pessoal'} ·{' '}
+                  {category.dreGroup === 'revenue'
+                    ? 'Receita'
+                    : category.dreGroup === 'deductions'
+                      ? 'Dedução'
+                      : 'Despesa'}
                 </p>
               </div>
               <div className={styles.rowActions}>

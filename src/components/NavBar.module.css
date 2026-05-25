@@ -29,11 +29,67 @@
   transition: color 0.15s, background-color 0.15s;
 }
 
+.settingsToggle,
+.settingsItem {
+  border: none;
+  background: transparent;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.settingsToggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 4px;
+}
+
+.settingsPanel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--nav-height);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px 12px;
+  z-index: 99;
+}
+
+.settingsItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border-radius: var(--radius-button);
+  background: var(--color-surface-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .navItem:hover {
   color: var(--color-accent-hover);
 }
 
+.settingsToggle:hover,
+.settingsItem:hover {
+  color: var(--color-accent-hover);
+}
+
 .navItem.active {
+  color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+}
+
+.settingsToggle.active,
+.settingsItem.active {
   color: var(--color-accent);
   background-color: var(--color-accent-soft);
 }
@@ -104,12 +160,52 @@
     color: var(--color-sidebar-text);
   }
 
+  .settingsToggle {
+    flex: unset;
+    justify-content: flex-start;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 0;
+    color: var(--color-sidebar-text);
+  }
+
+  .settingsPanel {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    border-top: none;
+    padding: 0 0 8px;
+    background: transparent;
+    margin-bottom: 8px;
+  }
+
+  .settingsItem {
+    justify-content: flex-start;
+    padding: 10px 20px 10px 34px;
+    font-size: 13px;
+    color: var(--color-sidebar-text);
+    background: transparent;
+  }
+
   .navItem:hover {
     color: var(--color-sidebar-active);
     background-color: rgba(255, 255, 255, 0.06);
   }
 
+  .settingsToggle:hover,
+  .settingsItem:hover {
+    color: var(--color-sidebar-active);
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
   .navItem.active {
+    color: var(--color-sidebar-active);
+    background-color: var(--color-sidebar-active-bg);
+  }
+
+  .settingsToggle.active,
+  .settingsItem.active {
     color: var(--color-sidebar-active);
     background-color: var(--color-sidebar-active-bg);
   }

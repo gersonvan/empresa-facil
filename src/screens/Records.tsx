@@ -28,6 +28,43 @@ function costTypeLabel(costType: 'company' | 'personal') {
   return costType === 'company' ? 'Empresa' : 'Pessoal'
 }
 
+function dreGroupLabel(dreGroup: DreGroup) {
+  if (dreGroup === 'revenue') {
+    return 'Receita'
+  }
+
+  if (dreGroup === 'deductions') {
+    return 'Dedução'
+  }
+
+  return 'Despesa'
+}
+
+function parseBrazilianAmount(rawValue: string) {
+  return Number(rawValue.replace(/\./g, '').replace(',', '.'))
+}
+
+function formatAmountInput(rawValue: string) {
+  const digitsOnly = rawValue.replace(/\D/g, '')
+  if (!digitsOnly) {
+    return ''
+  }
+
+  const normalized = digitsOnly.padStart(3, '0')
+  const integerPart = normalized.slice(0, -2)
+  const decimalPart = normalized.slice(-2)
+  const integerValue = Number(integerPart)
+
+  return `${integerValue.toLocaleString('pt-BR')},${decimalPart}`
+}
+
+function formatAmountForInput(value: number) {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 export default function Records() {
   const monthContext = getMonthContext()
   const [monthFilter, setMonthFilter] = useState(monthFromNow())
@@ -90,7 +127,7 @@ export default function Records() {
       dreGroup: entry.dreGroup,
       categoryId: entry.categoryId,
       description: entry.description,
-      amount: String(entry.amount).replace('.', ','),
+      amount: formatAmountForInput(entry.amount),
     })
     setMessage('')
   }
@@ -100,7 +137,7 @@ export default function Records() {
       return
     }
 
-    const amount = Number(editState.amount.replace(',', '.'))
+    const amount = parseBrazilianAmount(editState.amount)
     if (!editState.description.trim() || Number.isNaN(amount) || amount <= 0) {
       setMessage('Preencha descrição e valor maior que zero para salvar.')
       return
@@ -256,6 +293,7 @@ export default function Records() {
                   }
                 >
                   <option value="revenue">Receita</option>
+                  <option value="deductions">Dedução</option>
                   <option value="expenses">Despesa</option>
                 </select>
               </label>
@@ -306,7 +344,7 @@ export default function Records() {
                     current
                       ? {
                           ...current,
-                          amount: event.target.value,
+                          amount: formatAmountInput(event.target.value),
                         }
                       : current
                   )
@@ -331,7 +369,7 @@ export default function Records() {
                 <div className={styles.rowInfo}>
                   <p className={styles.rowTitle}>{entry.description}</p>
                   <p className={styles.rowMeta}>
-                    {costTypeLabel(entry.costType)} · {entry.dreGroup === 'revenue' ? 'Receita' : 'Despesa'} · {entry.categoryName} · {entry.month}
+                    {costTypeLabel(entry.costType)} · {dreGroupLabel(entry.dreGroup)} · {entry.categoryName} · {entry.month}
                   </p>
                 </div>
                 <div className={styles.rowTail}>

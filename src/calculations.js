@@ -6,7 +6,7 @@ const DRE_GROUP_VALUES = [
 ];
 
 const DEFAULT_ACCOUNTANT_WARNING =
-  "A apuracao de tributos e de suporte operacional e deve ser validada pelo contador responsavel antes de qualquer envio oficial.";
+  "A apuração de tributos e de suporte operacional deve ser validada pelo contador responsável antes de qualquer envio oficial.";
 const DEFAULT_RULE_CHANGE_REASON =
   "Regra aplicada para suporte operacional; validar com contabilidade.";
 

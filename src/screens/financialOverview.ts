@@ -2,76 +2,119 @@ import {
   buildMonthlyDreOverview,
   calculateVersionedSimplesSupport,
   createSimplesRuleCatalog,
-  createDreLineInput,
   type MonthlyOverview,
 } from '../calculations'
 import { monthLifecycleStore } from '../monthLifecycle'
-import { listLaunchLines } from '../launchStore'
+import { listLaunchEntries, listLaunchLines } from '../launchStore'
 
-const COMPANY_ID = 'company-main'
-const COMPANY_NAME = 'Empresa Principal'
-const MONTH = '2026-05'
+const DEFAULT_COMPANY_NAME = 'Empresa ativa'
+const COMPANY_ID_STORAGE_KEY = 'empresa-facil:active-company-id'
 
-const monthlyLines = [
-  createDreLineInput({
-    entryId: 'line-001',
-    companyId: COMPANY_ID,
-    month: MONTH,
-    amount: 12500,
-    dreGroup: 'revenue',
-    description: 'Vendas do periodo',
-  }),
-  createDreLineInput({
-    entryId: 'line-002',
-    companyId: COMPANY_ID,
-    month: MONTH,
-    amount: 900,
-    dreGroup: 'deductions',
-    description: 'Tributos sobre vendas',
-  }),
-  createDreLineInput({
-    entryId: 'line-003',
-    companyId: COMPANY_ID,
-    month: MONTH,
-    amount: 4800,
-    dreGroup: 'expenses',
-    description: 'Custos operacionais',
-  }),
-  createDreLineInput({
-    entryId: 'line-004',
-    companyId: COMPANY_ID,
-    month: MONTH,
-    amount: 180,
-    dreGroup: 'financial_income',
-    description: 'Rendimento financeiro',
-  }),
-]
+function monthFromNow() {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  return `${now.getFullYear()}-${month}`
+}
 
-const fiscalRuleCatalog = createSimplesRuleCatalog({
-  rules: [
-    {
-      version: '2026.04',
-      regime: 'simples_nacional',
-      effectiveRate: 5.9,
-      changeReason: 'Tabela vigente ate abril/2026.',
-      publishedAt: '2026-04-01T00:00:00.000Z',
-      source: 'finance-team',
-    },
-    {
-      version: '2026.05',
-      regime: 'simples_nacional',
-      effectiveRate: 6.1,
-      changeReason: 'Ajuste de aliquota efetiva para maio/2026.',
-      publishedAt: '2026-05-01T00:00:00.000Z',
-      source: 'finance-team',
-    },
-  ],
-})
+function inferMonthContext() {
+  const month = monthFromNow()
+  const monthEntries = listLaunchEntries({ month, costType: 'all' })
+  if (monthEntries.length > 0) {
+    return {
+      companyId: monthEntries[0].companyId,
+      companyName: DEFAULT_COMPANY_NAME,
+      month,
+    }
+  }
+
+  const latestEntries = listLaunchEntries({ costType: 'all' })
+  if (latestEntries.length > 0) {
+    const latestMonth = latestEntries[0].month
+    return {
+      companyId: latestEntries[0].companyId,
+      companyName: DEFAULT_COMPANY_NAME,
+      month: latestMonth,
+    }
+  }
+
+  return {
+    companyId: getOrCreateActiveCompanyId(),
+    companyName: DEFAULT_COMPANY_NAME,
+    month,
+  }
+}
+
+function getOrCreateActiveCompanyId() {
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+    return `company-${Date.now()}`
+  }
+
+  const stored = window.localStorage.getItem(COMPANY_ID_STORAGE_KEY)
+  if (stored && stored.trim()) {
+    return stored
+  }
+
+  const next =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? `company-${crypto.randomUUID()}`
+      : `company-${Date.now()}`
+  window.localStorage.setItem(COMPANY_ID_STORAGE_KEY, next)
+  return next
+}
+
+function toRuleVersion(month: string) {
+  return month.replace('-', '.')
+}
+
+function firstDayIso(month: string) {
+  return `${month}-01T00:00:00.000Z`
+}
+
+function previousMonth(month: string) {
+  const [yearRaw, monthRaw] = month.split('-')
+  const year = Number(yearRaw)
+  const monthNumber = Number(monthRaw)
+
+  const baseDate = new Date(year, monthNumber - 1, 1)
+  baseDate.setMonth(baseDate.getMonth() - 1)
+  const previousYear = baseDate.getFullYear()
+  const previousMonthNumber = String(baseDate.getMonth() + 1).padStart(2, '0')
+  return `${previousYear}-${previousMonthNumber}`
+}
+
+function createFiscalRuleCatalog(month: string) {
+  const previous = previousMonth(month)
+
+  return createSimplesRuleCatalog({
+    rules: [
+      {
+        version: toRuleVersion(previous),
+        regime: 'simples_nacional',
+        effectiveRate: 5.9,
+        changeReason: 'Regra de referencia do mes anterior.',
+        publishedAt: firstDayIso(previous),
+        source: 'finance-team',
+      },
+      {
+        version: toRuleVersion(month),
+        regime: 'simples_nacional',
+        effectiveRate: 6.1,
+        changeReason: 'Regra fiscal vigente no mes atual.',
+        publishedAt: firstDayIso(month),
+        source: 'finance-team',
+      },
+    ],
+  })
+}
 
 export function getMonthlyOverview(): MonthlyOverview {
+  const monthContext = inferMonthContext()
+  const fiscalRuleCatalog = createFiscalRuleCatalog(monthContext.month)
+  const ruleVersion = toRuleVersion(monthContext.month)
+
   const lifecycle = monthLifecycleStore.getStatus({
-    companyId: COMPANY_ID,
-    month: MONTH,
+    companyId: monthContext.companyId,
+    month: monthContext.month,
   })
 
   const lifecycleSnapshot = {
@@ -83,11 +126,11 @@ export function getMonthlyOverview(): MonthlyOverview {
   }
 
   const calculation = calculateVersionedSimplesSupport({
-    companyId: COMPANY_ID,
-    month: MONTH,
-    lines: [...monthlyLines, ...listLaunchLines({ companyId: COMPANY_ID, month: MONTH })],
+    companyId: monthContext.companyId,
+    month: monthContext.month,
+    lines: listLaunchLines({ companyId: monthContext.companyId, month: monthContext.month }),
     ruleCatalog: fiscalRuleCatalog,
-    ruleVersion: '2026.05',
+    ruleVersion,
     monthLifecycle: lifecycleSnapshot,
   })
 
@@ -95,11 +138,7 @@ export function getMonthlyOverview(): MonthlyOverview {
 }
 
 export function getMonthContext() {
-  return {
-    companyId: COMPANY_ID,
-    companyName: COMPANY_NAME,
-    month: MONTH,
-  }
+  return inferMonthContext()
 }
 
 export function formatCurrency(value: number) {

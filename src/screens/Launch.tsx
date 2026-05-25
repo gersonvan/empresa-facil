@@ -7,6 +7,7 @@ import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { monthLifecycleStore } from '../monthLifecycle'
 import { saveLaunchEntry } from '../launchStore'
 import { Button, Card, Input } from '../components/ui'
+import { getMonthContext } from './financialOverview'
 import styles from './Launch.module.css'
 
 interface LaunchFormState {
@@ -24,7 +25,17 @@ interface ValidationErrors {
   amount?: string
 }
 
-const DEFAULT_COMPANY_ID = 'company-main'
+function dreGroupLabel(dreGroup: DreGroup) {
+  if (dreGroup === 'revenue') {
+    return 'Receita'
+  }
+
+  if (dreGroup === 'deductions') {
+    return 'Dedução'
+  }
+
+  return 'Despesa'
+}
 
 function monthFromNow() {
   const now = new Date()
@@ -33,7 +44,21 @@ function monthFromNow() {
 }
 
 function parseBrazilianAmount(rawValue: string) {
-  return Number(rawValue.replace(',', '.'))
+  return Number(rawValue.replace(/\./g, '').replace(',', '.'))
+}
+
+function formatAmountInput(rawValue: string) {
+  const digitsOnly = rawValue.replace(/\D/g, '')
+  if (!digitsOnly) {
+    return ''
+  }
+
+  const normalized = digitsOnly.padStart(3, '0')
+  const integerPart = normalized.slice(0, -2)
+  const decimalPart = normalized.slice(-2)
+  const integerValue = Number(integerPart)
+
+  return `${integerValue.toLocaleString('pt-BR')},${decimalPart}`
 }
 
 function nextEntryId() {
@@ -60,6 +85,7 @@ export default function Launch() {
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>('')
 
+  const monthContext = getMonthContext()
   const currentMonth = useMemo(() => monthFromNow(), [])
 
   const availableCategories = useMemo(
@@ -99,7 +125,7 @@ export default function Launch() {
       return
     }
 
-    if (monthLifecycleStore.isMonthClosed({ companyId: DEFAULT_COMPANY_ID, month: currentMonth })) {
+    if (monthLifecycleStore.isMonthClosed({ companyId: monthContext.companyId, month: currentMonth })) {
       setStatusMessage('Este mês está fechado. Reabra em Revisão do Mês para incluir ou editar lançamentos.')
       return
     }
@@ -112,7 +138,7 @@ export default function Launch() {
 
     const entry = createLaunchEntry({
       id: nextEntryId(),
-      companyId: DEFAULT_COMPANY_ID,
+      companyId: monthContext.companyId,
       month: currentMonth,
       costType: form.costType,
       description: form.description,
@@ -197,6 +223,14 @@ export default function Launch() {
                 </button>
                 <button
                   type="button"
+                  className={`${styles.intentButton} ${form.dreGroup === 'deductions' ? styles.intentActive : ''}`}
+                  onClick={() => updateDreGroup('deductions')}
+                  aria-pressed={form.dreGroup === 'deductions'}
+                >
+                  Dedução
+                </button>
+                <button
+                  type="button"
                   className={`${styles.intentButton} ${form.dreGroup === 'expenses' ? styles.intentActive : ''}`}
                   onClick={() => updateDreGroup('expenses')}
                   aria-pressed={form.dreGroup === 'expenses'}
@@ -225,7 +259,13 @@ export default function Launch() {
 
               <Input
                 label="Descrição"
-                placeholder={form.dreGroup === 'revenue' ? 'Ex.: venda balcão' : 'Ex.: aluguel do escritorio'}
+                placeholder={
+                  form.dreGroup === 'revenue'
+                    ? 'Ex.: venda balcão'
+                    : form.dreGroup === 'deductions'
+                      ? 'Ex.: desconto incondicional concedido'
+                      : 'Ex.: aluguel do escritório'
+                }
                 helperText="Use um nome curto e direto."
                 value={form.description}
                 onChange={(event) => setForm((prevState) => ({ ...prevState, description: event.target.value }))}
@@ -236,7 +276,12 @@ export default function Launch() {
                 inputMode="decimal"
                 placeholder="0,00"
                 value={form.amount}
-                onChange={(event) => setForm((prevState) => ({ ...prevState, amount: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prevState) => ({
+                    ...prevState,
+                    amount: formatAmountInput(event.target.value),
+                  }))
+                }
                 errorText={errors.amount}
               />
               <details className={styles.optionalDetails}>
@@ -256,7 +301,11 @@ export default function Launch() {
           <section className={styles.step} aria-label="Passo 3 de 3">
             <h2 className={styles.stepTitle}>3. Confirmar e salvar</h2>
             <p className={styles.stepHint}>
-              Empresa padrão: <strong>{DEFAULT_COMPANY_ID}</strong> · Mês: <strong>{currentMonth}</strong>
+              Empresa ativa: <strong>{monthContext.companyId}</strong> · Mês: <strong>{currentMonth}</strong>
+            </p>
+            <p className={styles.stepHint}>
+              Natureza selecionada: <strong>{dreGroupLabel(form.dreGroup)}</strong>. No Simples Nacional, deduções reduzem
+              a base de cálculo da receita bruta e devem ser registradas separadamente de despesas.
             </p>
             <Button type="submit" variant="primary" fullWidth>
               Salvar lançamento

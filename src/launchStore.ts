@@ -57,7 +57,8 @@ function normalizeEntry(entry: unknown): StoredLaunchEntry | null {
     companyId: String(input.companyId),
     month: String(input.month),
     costType: input.costType === 'personal' ? 'personal' : 'company',
-    dreGroup: input.dreGroup === 'revenue' ? 'revenue' : 'expenses',
+    dreGroup:
+      input.dreGroup === 'revenue' || input.dreGroup === 'deductions' ? input.dreGroup : 'expenses',
     categoryId: input.categoryId ? String(input.categoryId) : 'uncategorized',
     categoryName: input.categoryName ? String(input.categoryName) : 'Sem categoria',
     description: String(input.description),

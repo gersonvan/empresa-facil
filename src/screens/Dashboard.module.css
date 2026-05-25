@@ -38,6 +38,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  margin-bottom: 16px;
 }
 
 .indicator {
@@ -75,6 +76,61 @@
 
 .negative .indicatorValue {
   color: var(--color-negative);
+}
+
+.categoryCard {
+  display: grid;
+  gap: 10px;
+}
+
+.categoryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.categoryTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.categoryEmpty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.categoryList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.categoryRow {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.categoryName {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.categoryAmount {
+  font-size: 13px;
+  color: var(--color-text-primary);
 }
 
 @media (min-width: 768px) {
