@@ -7,6 +7,7 @@ const navItems = [
   { path: '/launch', label: 'Lançar' },
   { path: '/records', label: 'Registros' },
   { path: '/category-insights', label: 'Análise' },
+  { path: '/deduction-review', label: 'Deduções' },
   { path: '/cash-flow-projection', label: 'Projeção' },
   { path: '/dre', label: 'DRE' },
   { path: '/month-review', label: 'Mês' },

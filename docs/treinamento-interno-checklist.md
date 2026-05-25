@@ -7,7 +7,9 @@ Use em onboarding de novos colaboradores e em reciclagem mensal.
 Ao final, a pessoa deve conseguir:
 1. Registrar lancamentos em 3 passos.
 2. Ler o DRE basico do mes.
-3. Apoiar revisao e fechamento mensal com seguranca.
+3. Revisar deducoes previstas automaticas com seguranca.
+4. Executar reconciliacao mensal previsto vs real antes do fechamento.
+5. Apoiar revisao e fechamento mensal com seguranca.
 
 ## Materiais de apoio
 1. Guia iniciante: `docs/guia-passo-a-passo-iniciante.md`
@@ -106,6 +108,10 @@ Use no ultimo dia util (ou no 1o dia util seguinte).
 
 - [ ] Confirmar que todos os lancamentos do mes foram feitos.
 - [ ] Revisar DRE (receita, deducoes, despesas, resultado).
+- [ ] Revisar tela Deducoes (status suggested, approved, rejected, edited).
+- [ ] Validar valores previstos de deducao com apoio do contador.
+- [ ] Informar total real de deducoes no card de reconciliacao.
+- [ ] Gerar ajuste de reconciliacao quando houver diferenca.
 - [ ] Revisar composicao de custos.
 - [ ] Revisar regra fiscal e rastreio.
 - [ ] Enviar para revisao.
@@ -129,6 +135,8 @@ Acao: manter regra de validacao com contador.
 A pessoa e considerada apta quando:
 - [ ] Consegue fazer 2 lancamentos (empresa e pessoal) sem ajuda.
 - [ ] Interpreta corretamente o resultado do DRE.
+- [ ] Revisa pelo menos 1 deducao prevista e altera status corretamente.
+- [ ] Executa reconciliacao mensal previsto vs real e entende a diferenca.
 - [ ] Executa fluxo de revisao do mes e explica o que muda ao fechar.
 - [ ] Cita a regra: suporte fiscal e auxiliar, nao substitui contador.
 

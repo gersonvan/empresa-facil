@@ -1,36 +1,40 @@
 title: Report - Calculation Agent
 owner: calculation-agent
 status: completed-partial
-date: 2026-05-24
+date: 2026-05-25
 
 Resumo de entrega
-- Motor de projecao mensal implementado com horizonte variavel e consolidacao por tipo de conta.
-- Testes de determinismo e cenarios basicos de fixas/parceladas adicionados.
+- Motor puro de estimativa de deducoes entregue para reaproveito no fluxo de lancamentos.
+- Selecao de faixa, calculo, snapshot e formulaVersion encapsulados em modulo deterministico.
+- Suite dedicada de testes adicionada para fronteiras, arredondamento e determinismo.
 
 Arquivos alterados
-- src/projection.js
-- src/projection.d.ts
-- tests/projection-engine.test.js
+- src/deductionEstimation.ts (novo)
+- src/launchStore.ts
+- tests/deduction-estimation.test.js (novo)
 - package.json
 
 Funcoes e contratos criados
-1. createProjectionHorizon
-2. projectCommitments
-3. ProjectionRow e ProjectionSummary (tipos)
+1. selectDeductionBracket
+2. calculateEstimatedDeduction
+3. DEFAULT_DEDUCTION_FORMULA_VERSION
+4. DeductionEstimationSnapshot e DeductionEstimationResult
 
 Casos de teste cobertos
-1. Horizonte de meses.
-2. Fixa sem fim e fixa com fim.
-3. Parcelamento com parcelas restantes.
-4. Determinismo por ordem de entrada.
+1. Selecao de faixa em limites de fronteira.
+2. Formula e arredondamento monetario em 2 casas.
+3. FormulaVersion default e custom.
+4. Entradas invalidas (retorno nulo).
+5. Determinismo por ordem de faixas.
 
 Validacao
 1. Build: aprovado.
-2. Testes: aprovado com projection-engine incluso na suite npm test.
+2. Testes: aprovado com deduction-estimation incluso na suite npm test.
 
 Riscos remanescentes
-1. Reforcar validacoes de entrada para casos invalidos de parcelas e valores negativos.
+1. Integrar tela de revisao para status suggested/approved/rejected ainda pendente.
+2. Reconciliacao mensal previsto vs real ainda pendente.
 
 Handoff para manager
-- API pronta para consumo de tela de projecao e proximos formularios de compromisso.
+- Motor puro pronto para consumo do fluxo de revisao e conciliacao sem duplicar regra na UI.
 

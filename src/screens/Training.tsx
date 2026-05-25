@@ -55,6 +55,22 @@ const steps = [
       'Consulte o histórico de alterações para auditar o que foi alterado e quando.',
     ],
   },
+  {
+    title: '7. Revisão de deduções previstas (novo)',
+    bullets: [
+      'Acesse Deduções para filtrar por mês, status e faixa aplicada.',
+      'Aprove, rejeite ou edite o valor das deduções sugeridas automaticamente.',
+      'Sempre trate os valores como apoio operacional e valide com contador.',
+    ],
+  },
+  {
+    title: '8. Reconciliação mensal previsto vs real',
+    bullets: [
+      'Na Revisão do Mês, informe o total real de deduções apuradas.',
+      'Compare a diferença real menos previsto antes de gerar ajuste.',
+      'Gere o ajuste de reconciliação para fechar o mês com rastreabilidade.',
+    ],
+  },
 ]
 
 export default function Training() {
@@ -64,7 +80,7 @@ export default function Training() {
         <h2 className={styles.sectionTitle}>Como usar o sistema (iniciante)</h2>
         <p className={styles.copy}>
           Este treinamento foi pensado para quem nunca usou controle financeiro.
-          Siga os 4 blocos abaixo na ordem.
+          Siga os blocos abaixo na ordem, incluindo a etapa de revisão de deduções previstas.
         </p>
       </Card>
 
@@ -92,6 +108,8 @@ export default function Training() {
           <li>Entendeu o fechamento mensal e o bloqueio de período fechado.</li>
           <li>Conseguiu cadastrar 1 conta fixa e 1 parcelamento na projeção.</li>
           <li>Conseguiu editar um compromisso e consultar o histórico de alterações.</li>
+          <li>Conseguiu revisar 1 dedução prevista e alterar seu status.</li>
+          <li>Conseguiu executar reconciliação mensal de deduções com ajuste.</li>
         </ul>
       </Card>
     </ScreenContainer>

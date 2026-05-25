@@ -9,6 +9,7 @@ import Categories from './screens/Categories'
 import ChartOfAccounts from './screens/ChartOfAccounts'
 import CategoryInsights from './screens/CategoryInsights'
 import CashFlowProjection from './screens/CashFlowProjection'
+import DeductionReview from './screens/DeductionReview'
 
 export default function AppRouter() {
   return (
@@ -22,6 +23,7 @@ export default function AppRouter() {
       <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
       <Route path="/category-insights" element={<CategoryInsights />} />
       <Route path="/cash-flow-projection" element={<CashFlowProjection />} />
+      <Route path="/deduction-review" element={<DeductionReview />} />
       <Route path="/month-review" element={<MonthReview />} />
       <Route path="/training" element={<Training />} />
     </Routes>
