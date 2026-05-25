@@ -316,3 +316,35 @@ export function listLaunchLines({ companyId, month }: { companyId: string; month
       })
     )
 }
+
+export function recomputeAutomaticDeductions(filters: { companyId?: string } = {}) {
+  const { companyId } = filters
+  const current = readEntries()
+
+  const scopedEntries = companyId
+    ? current.filter((entry) => entry.companyId === companyId)
+    : current
+
+  const keepEntries = current.filter((entry) => {
+    if (entry.sourceType !== TAX_ESTIMATION_SOURCE_TYPE) {
+      return true
+    }
+
+    if (!companyId) {
+      return false
+    }
+
+    return entry.companyId !== companyId
+  })
+
+  const revenues = scopedEntries.filter(
+    (entry) => entry.sourceType !== TAX_ESTIMATION_SOURCE_TYPE && isCompanyRevenue(entry)
+  )
+
+  let next = keepEntries
+  for (const revenueEntry of revenues) {
+    next = applyAutoEstimation(next, revenueEntry)
+  }
+
+  writeEntries(next)
+}

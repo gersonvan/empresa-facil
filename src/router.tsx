@@ -10,6 +10,7 @@ import ChartOfAccounts from './screens/ChartOfAccounts'
 import CategoryInsights from './screens/CategoryInsights'
 import CashFlowProjection from './screens/CashFlowProjection'
 import DeductionReview from './screens/DeductionReview'
+import TaxProfileSettings from './screens/TaxProfileSettings'
 
 export default function AppRouter() {
   return (
@@ -19,6 +20,7 @@ export default function AppRouter() {
       <Route path="/launch" element={<Launch />} />
       <Route path="/dre" element={<DRE />} />
       <Route path="/records" element={<Records />} />
+      <Route path="/tax-profile" element={<TaxProfileSettings />} />
       <Route path="/categories" element={<Categories />} />
       <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
       <Route path="/category-insights" element={<CategoryInsights />} />

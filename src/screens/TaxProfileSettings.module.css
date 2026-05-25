@@ -1,0 +1,81 @@
+.formCard {
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.helper {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.message {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.formGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.previewCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+  background: var(--color-surface);
+}
+
+.previewTitle {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.previewText {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.rowMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
