@@ -1,6 +1,7 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import { useNavigate } from 'react-router-dom'
+import { jsPDF } from 'jspdf'
 import { getActiveCompany } from '../companyStore'
 import { listLaunchEntries } from '../launchStore'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
@@ -36,6 +37,11 @@ function formatCnpj(cnpj?: string) {
   }
 
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`
+}
+
+function formatPdfMoney(value: number) {
+  const absolute = formatCurrency(Math.abs(value))
+  return value < 0 ? `(${absolute})` : absolute
 }
 
 function formatStatementValue(value: number, options: { enforceNegativeStyle?: boolean } = {}) {
@@ -218,6 +224,157 @@ export default function DRE() {
 
   function printDre() {
     window.print()
+  }
+
+  function exportPdf() {
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const marginLeft = 14
+    const marginRight = 14
+    const marginTop = 14
+    const marginBottom = 14
+    const footerHeight = 8
+    const bottomLimit = pageHeight - marginBottom - footerHeight
+    const labelWidth = 136
+    const valueX = pageWidth - marginRight
+    const lineHeight = 5.4
+    let cursorY = marginTop
+
+    function addPageHeader() {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(14)
+      doc.text('Demonstração do Resultado do Exercício', marginLeft, cursorY)
+      cursorY += 7
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.text(`Empresa: ${activeCompany?.name ?? monthContext.companyName}`, marginLeft, cursorY)
+      cursorY += 4.5
+      doc.text(`CNPJ: ${formatCnpj(activeCompany?.cnpj)}`, marginLeft, cursorY)
+      cursorY += 4.5
+      doc.text(`Competência: ${toMonthLabel(monthContext.month)}`, marginLeft, cursorY)
+      cursorY += 4.5
+      doc.text(`Emitido em: ${new Date().toLocaleString('pt-BR')}`, marginLeft, cursorY)
+      cursorY += 6
+
+      doc.setDrawColor(180)
+      doc.line(marginLeft, cursorY, pageWidth - marginRight, cursorY)
+      cursorY += 6
+    }
+
+    function ensureSpace(requiredHeight: number) {
+      if (cursorY + requiredHeight <= bottomLimit) {
+        return
+      }
+
+      doc.addPage()
+      cursorY = marginTop
+      addPageHeader()
+    }
+
+    function writeSectionTitle(title: string) {
+      ensureSpace(12)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.text(title, marginLeft, cursorY)
+      cursorY += 5
+      doc.setDrawColor(210)
+      doc.line(marginLeft, cursorY, pageWidth - marginRight, cursorY)
+      cursorY += 5
+    }
+
+    function writeRow(label: string, value: number) {
+      const labelLines = doc.splitTextToSize(label, labelWidth) as string[]
+      const rowHeight = Math.max(labelLines.length, 1) * lineHeight
+      ensureSpace(rowHeight + 1)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.text(labelLines, marginLeft, cursorY)
+      doc.setFont('helvetica', 'bold')
+      doc.text(formatPdfMoney(value), valueX, cursorY, { align: 'right' })
+      cursorY += rowHeight
+    }
+
+    function writeSection(sectionTitle: string, rows: DetailedRow[], total: number) {
+      const firstRowHeight = rows.length === 0
+        ? lineHeight
+        : Math.max((doc.splitTextToSize(rows[0].label, labelWidth) as string[]).length, 1) * lineHeight
+      const minimumSectionHeight = 12 + firstRowHeight + lineHeight + 4
+      ensureSpace(minimumSectionHeight)
+      writeSectionTitle(sectionTitle)
+
+      if (rows.length === 0) {
+        ensureSpace(lineHeight + 2)
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(9)
+        doc.text('Sem lançamentos neste bloco para o mês selecionado.', marginLeft, cursorY)
+        cursorY += lineHeight
+      } else {
+        rows.forEach((row) => writeRow(row.label, row.amount))
+      }
+
+      cursorY += 1
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      ensureSpace(lineHeight + 2)
+      doc.text('Subtotal', marginLeft, cursorY)
+      doc.text(formatPdfMoney(total), valueX, cursorY, { align: 'right' })
+      cursorY += 6
+    }
+
+    addPageHeader()
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('SEÇÕES GERENCIAIS', marginLeft, cursorY)
+    cursorY += 6
+
+    detailedSections.forEach((section) => {
+      writeSection(section.title, section.rows, section.total)
+    })
+
+    writeSection('CUSTOS DIRETOS', expenseBuckets[0].rows, expenseBuckets[0].total)
+    writeSection('DESPESAS ADMINISTRATIVAS / OPERACIONAIS', expenseBuckets[1].rows, expenseBuckets[1].total)
+    writeSection('DESPESAS FINANCEIRAS', expenseBuckets[2].rows, expenseBuckets[2].total)
+    writeSection('IMPOSTOS, TAXAS E CONTRIBUIÇÕES', expenseBuckets[3].rows, expenseBuckets[3].total)
+
+    ensureSpace(12 + lineHeight + 2)
+    writeSectionTitle('RECEITAS FINANCEIRAS')
+    if (financialIncome === 0) {
+      doc.setFont('helvetica', 'italic')
+      doc.setFontSize(9)
+      doc.text('Sem lançamentos financeiros no mês selecionado.', marginLeft, cursorY)
+      cursorY += lineHeight
+    } else {
+      writeRow('Receitas financeiras', financialIncome)
+    }
+
+    cursorY += 2
+    const totalsBlockHeight = 6 + (lineHeight * 3) + 2
+    ensureSpace(totalsBlockHeight)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('TOTAIS FINAIS', marginLeft, cursorY)
+    cursorY += 6
+    doc.setFontSize(10)
+    writeRow('Receita líquida', netRevenue)
+    writeRow('Resultado antes das receitas financeiras', resultBeforeFinancial)
+    writeRow('Resultado operacional', operatingResult)
+
+    const totalPages = doc.getNumberOfPages()
+    for (let page = 1; page <= totalPages; page += 1) {
+      doc.setPage(page)
+      const footerY = pageHeight - marginBottom
+      doc.setDrawColor(220)
+      doc.line(marginLeft, footerY - 4, pageWidth - marginRight, footerY - 4)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.text(`Página ${page} de ${totalPages}`, pageWidth / 2, footerY, { align: 'center' })
+    }
+
+    doc.save(`dre-gerencial-${monthContext.month}.pdf`)
   }
 
   function downloadTextFile({ content, fileName, mimeType }: { content: string; fileName: string; mimeType: string }) {
@@ -418,6 +575,7 @@ export default function DRE() {
           </ul>
           <div className={styles.actions}>
             <Button size="sm" variant="primary" onClick={printDre}>Imprimir DRE</Button>
+            <Button size="sm" variant="secondary" onClick={exportPdf}>Exportar PDF</Button>
             <Button size="sm" variant="secondary" onClick={exportSummaryJson}>Exportar resumo (JSON)</Button>
             <Button size="sm" variant="secondary" onClick={exportSummaryCsv}>Exportar resumo (CSV)</Button>
             <Button size="sm" variant="outline" onClick={() => navigate('/month-review')}>Abrir fechamento</Button>
