@@ -1,12 +1,116 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import { useNavigate } from 'react-router-dom'
-import { formatCurrency, formatPercent, getMonthlyOverview } from './financialOverview'
+import { getActiveCompany } from '../companyStore'
+import { listLaunchEntries } from '../launchStore'
+import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
 import styles from './DRE.module.css'
+
+interface DetailedRow {
+  label: string
+  amount: number
+}
+
+interface DetailedSection {
+  key: 'revenue' | 'deductions' | 'expenses'
+  title: string
+  rows: DetailedRow[]
+  total: number
+}
+
+function toMonthLabel(month: string) {
+  const [year, monthRaw] = month.split('-')
+  return `${monthRaw}/${year}`
+}
+
+function formatCnpj(cnpj?: string) {
+  const digits = (cnpj ?? '').replace(/\D/g, '')
+  if (digits.length !== 14) {
+    return 'Não informado'
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`
+}
+
+function formatStatementValue(value: number, options: { enforceNegativeStyle?: boolean } = {}) {
+  const { enforceNegativeStyle = false } = options
+  if (value < 0 || enforceNegativeStyle) {
+    return `(${formatCurrency(Math.abs(value))})`
+  }
+
+  return formatCurrency(value)
+}
+
+function buildDetailedSections({ companyId, month }: { companyId: string; month: string }): DetailedSection[] {
+  const entries = listLaunchEntries({ companyId, month, costType: 'company' })
+
+  const sections = {
+    revenue: new Map<string, number>(),
+    deductions: new Map<string, number>(),
+    expenses: new Map<string, number>(),
+  }
+
+  for (const entry of entries) {
+    if (entry.dreGroup === 'revenue') {
+      const current = sections.revenue.get(entry.categoryName) ?? 0
+      sections.revenue.set(entry.categoryName, current + entry.amount)
+      continue
+    }
+
+    if (entry.dreGroup === 'deductions') {
+      const current = sections.deductions.get(entry.categoryName) ?? 0
+      sections.deductions.set(entry.categoryName, current + entry.amount)
+      continue
+    }
+
+    const current = sections.expenses.get(entry.categoryName) ?? 0
+    sections.expenses.set(entry.categoryName, current + entry.amount)
+  }
+
+  function mapRows(group: Map<string, number>) {
+    return [...group.entries()]
+      .map(([label, amount]) => ({ label, amount }))
+      .sort((left, right) => right.amount - left.amount)
+  }
+
+  const revenueRows = mapRows(sections.revenue)
+  const deductionRows = mapRows(sections.deductions)
+  const expenseRows = mapRows(sections.expenses)
+
+  return [
+    {
+      key: 'revenue',
+      title: 'RECEITA BRUTA',
+      rows: revenueRows,
+      total: revenueRows.reduce((accumulator, row) => accumulator + row.amount, 0),
+    },
+    {
+      key: 'deductions',
+      title: 'DEDUÇÕES',
+      rows: deductionRows,
+      total: deductionRows.reduce((accumulator, row) => accumulator + row.amount, 0),
+    },
+    {
+      key: 'expenses',
+      title: 'DESPESAS OPERACIONAIS',
+      rows: expenseRows,
+      total: expenseRows.reduce((accumulator, row) => accumulator + row.amount, 0),
+    },
+  ]
+}
 
 export default function DRE() {
   const navigate = useNavigate()
   const overview = getMonthlyOverview()
+  const monthContext = getMonthContext()
+  const activeCompany = getActiveCompany()
+  const detailedSections = buildDetailedSections({ companyId: monthContext.companyId, month: monthContext.month })
+
+  const revenueTotal = detailedSections.find((section) => section.key === 'revenue')?.total ?? 0
+  const deductionsTotal = detailedSections.find((section) => section.key === 'deductions')?.total ?? 0
+  const expensesTotal = detailedSections.find((section) => section.key === 'expenses')?.total ?? 0
+  const netRevenue = revenueTotal - deductionsTotal
+  const operatingResult = netRevenue - expensesTotal
 
   function downloadTextFile({ content, fileName, mimeType }: { content: string; fileName: string; mimeType: string }) {
     const blob = new Blob([content], { type: mimeType })
@@ -60,6 +164,65 @@ export default function DRE() {
   return (
     <ScreenContainer title="DRE">
       <div className={styles.grid}>
+        <Card className={styles.reportCard}>
+          <header className={styles.reportHeader}>
+            <p>
+              <strong>Empresa:</strong> {activeCompany?.name ?? monthContext.companyName}
+            </p>
+            <p>
+              <strong>C.N.P.J.:</strong> {formatCnpj(activeCompany?.cnpj)}
+            </p>
+            <p>
+              <strong>Demonstração do Resultado do Exercício:</strong> {toMonthLabel(monthContext.month)}
+            </p>
+          </header>
+
+          <section className={styles.statementTable} aria-label="Demonstrativo DRE detalhado">
+            {detailedSections.map((section) => (
+              <div key={section.key} className={styles.statementSection}>
+                <div className={styles.statementSectionHeader}>
+                  <h2 className={styles.statementTitle}>{section.title}</h2>
+                  <strong className={styles.statementTotal}>
+                    {formatStatementValue(section.total, {
+                      enforceNegativeStyle: section.key !== 'revenue',
+                    })}
+                  </strong>
+                </div>
+
+                {section.rows.length === 0 ? (
+                  <p className={styles.emptyState}>Sem lançamentos neste bloco para o mês selecionado.</p>
+                ) : (
+                  <ul className={styles.statementRows}>
+                    {section.rows.map((row) => (
+                      <li key={`${section.key}-${row.label}`} className={styles.statementRow}>
+                        <span>{row.label}</span>
+                        <strong>
+                          {formatStatementValue(row.amount, {
+                            enforceNegativeStyle: section.key !== 'revenue',
+                          })}
+                        </strong>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+
+            <div className={styles.finalTotals}>
+              <div className={styles.finalRow}>
+                <span>RECEITA LÍQUIDA</span>
+                <strong>{formatStatementValue(netRevenue)}</strong>
+              </div>
+              <div className={styles.finalRow}>
+                <span>RESULTADO OPERACIONAL</span>
+                <strong className={operatingResult >= 0 ? styles.pos : styles.neg}>
+                  {formatStatementValue(operatingResult)}
+                </strong>
+              </div>
+            </div>
+          </section>
+        </Card>
+
         <Card className={styles.summaryCard}>
           <h2 className={styles.sectionTitle}>Resumo do mês</h2>
           <dl className={styles.summaryList}>
