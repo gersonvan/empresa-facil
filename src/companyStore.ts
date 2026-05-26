@@ -12,6 +12,10 @@ const COMPANIES_STORAGE_KEY = 'empresa-facil:companies:v1'
 const ACTIVE_COMPANY_STORAGE_KEY = 'empresa-facil:active-company-id:v1'
 const LEGACY_ACTIVE_COMPANY_STORAGE_KEY = 'empresa-facil:active-company-id'
 const ACTIVE_COMPANY_CHANGED_EVENT = 'empresa-facil:active-company-changed'
+const LAUNCH_ENTRIES_STORAGE_KEY = 'empresa-facil:launch-entries:v1'
+const TAX_PROFILE_STORAGE_KEY = 'empresa-facil:tax-profile:v1'
+const RECONCILIATION_STORAGE_KEY = 'empresa-facil:deduction-reconciliation:v1'
+const MONTH_LIFECYCLE_STORAGE_KEY = 'empresa-facil:month-lifecycle:v1'
 
 function hasLocalStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
@@ -31,6 +35,148 @@ function cleanText(value: unknown) {
 
 function normalizeCnpj(value: string) {
   return value.replace(/\D/g, '')
+}
+
+function readArrayFromStorage(storageKey: string) {
+  if (!hasLocalStorage()) {
+    return [] as unknown[]
+  }
+
+  const raw = window.localStorage.getItem(storageKey)
+  if (!raw) {
+    return [] as unknown[]
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return [] as unknown[]
+  }
+}
+
+function readObjectFromStorage(storageKey: string) {
+  if (!hasLocalStorage()) {
+    return {} as Record<string, unknown>
+  }
+
+  const raw = window.localStorage.getItem(storageKey)
+  if (!raw) {
+    return {} as Record<string, unknown>
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>
+    }
+    return {} as Record<string, unknown>
+  } catch {
+    return {} as Record<string, unknown>
+  }
+}
+
+function collectLegacyCompanyIds() {
+  const ids = new Set<string>()
+
+  if (!hasLocalStorage()) {
+    return ids
+  }
+
+  const activeCompanyId = cleanText(window.localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY))
+  if (activeCompanyId) {
+    ids.add(activeCompanyId)
+  }
+
+  const legacyActiveCompanyId = cleanText(window.localStorage.getItem(LEGACY_ACTIVE_COMPANY_STORAGE_KEY))
+  if (legacyActiveCompanyId) {
+    ids.add(legacyActiveCompanyId)
+  }
+
+  for (const item of readArrayFromStorage(LAUNCH_ENTRIES_STORAGE_KEY)) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+
+    const entry = item as { companyId?: unknown }
+    const companyId = cleanText(entry.companyId)
+    if (companyId) {
+      ids.add(companyId)
+    }
+  }
+
+  for (const item of readArrayFromStorage(TAX_PROFILE_STORAGE_KEY)) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+
+    const profile = item as { companyId?: unknown }
+    const companyId = cleanText(profile.companyId)
+    if (companyId) {
+      ids.add(companyId)
+    }
+  }
+
+  for (const item of readArrayFromStorage(RECONCILIATION_STORAGE_KEY)) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+
+    const record = item as { companyId?: unknown }
+    const companyId = cleanText(record.companyId)
+    if (companyId) {
+      ids.add(companyId)
+    }
+  }
+
+  const lifecycleState = readObjectFromStorage(MONTH_LIFECYCLE_STORAGE_KEY)
+  for (const stateKey of Object.keys(lifecycleState)) {
+    const companyId = cleanText(stateKey.split(':')[0])
+    if (companyId) {
+      ids.add(companyId)
+    }
+  }
+
+  return ids
+}
+
+function createLegacyCompanyName(companyId: string, order: number) {
+  return `Empresa migrada ${String(order + 1).padStart(2, '0')} (${companyId})`
+}
+
+function mergeLegacyCompanyIds(companies: StoredCompany[]) {
+  const ids = collectLegacyCompanyIds()
+  const known = new Set(companies.map((company) => company.id))
+
+  if (ids.size === 0) {
+    return {
+      changed: false,
+      companies,
+    }
+  }
+
+  const next = [...companies]
+  const now = new Date().toISOString()
+
+  for (const companyId of ids) {
+    if (known.has(companyId)) {
+      continue
+    }
+
+    next.push({
+      id: companyId,
+      name: createLegacyCompanyName(companyId, next.length),
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+    })
+    known.add(companyId)
+  }
+
+  return {
+    changed: next.length !== companies.length,
+    companies: next,
+  }
 }
 
 function normalizeCompany(input: unknown): StoredCompany | null {
@@ -69,36 +215,42 @@ function writeCompanies(companies: StoredCompany[]) {
   window.localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies))
 }
 
-function bootstrapCompanies() {
+function bootstrapCompanies(): StoredCompany[] {
   if (!hasLocalStorage()) {
     const now = new Date().toISOString()
-    return [
+    const memorySeed: StoredCompany[] = [
       {
         id: nextCompanyId(),
         name: 'Empresa principal',
-        status: 'active' as const,
+        status: 'active',
         createdAt: now,
         updatedAt: now,
       },
     ]
+
+    return memorySeed
   }
 
   const now = new Date().toISOString()
-  const legacyActiveId = cleanText(window.localStorage.getItem(LEGACY_ACTIVE_COMPANY_STORAGE_KEY))
-  const activeId = cleanText(window.localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY))
-  const seedId = activeId || legacyActiveId || nextCompanyId()
+  const seedIds = [...collectLegacyCompanyIds()]
+  if (seedIds.length === 0) {
+    seedIds.push(nextCompanyId())
+  }
 
-  const defaultCompany: StoredCompany = {
-    id: seedId,
-    name: 'Empresa principal',
+  const defaultCompanies: StoredCompany[] = seedIds.map((companyId, index) => ({
+    id: companyId,
+    name: index === 0 ? 'Empresa principal' : createLegacyCompanyName(companyId, index),
     status: 'active',
     createdAt: now,
     updatedAt: now,
-  }
+  }))
 
-  writeCompanies([defaultCompany])
-  window.localStorage.setItem(ACTIVE_COMPANY_STORAGE_KEY, seedId)
-  return [defaultCompany]
+  const preferredActiveId = cleanText(window.localStorage.getItem(ACTIVE_COMPANY_STORAGE_KEY))
+  const activeId = preferredActiveId || seedIds[0]
+
+  writeCompanies(defaultCompanies)
+  window.localStorage.setItem(ACTIVE_COMPANY_STORAGE_KEY, activeId)
+  return defaultCompanies
 }
 
 function readCompanies() {
@@ -123,6 +275,12 @@ function readCompanies() {
 
     if (companies.length === 0) {
       return bootstrapCompanies()
+    }
+
+    const merged = mergeLegacyCompanyIds(companies)
+    if (merged.changed) {
+      writeCompanies(merged.companies)
+      return merged.companies
     }
 
     return companies
@@ -226,6 +384,13 @@ export function createCompany(input: CreateCompanyInput) {
     throw new Error('Já existe uma empresa com este nome.')
   }
 
+  const duplicatedCnpj = cnpj
+    ? companies.some((company) => normalizeCnpj(cleanText(company.cnpj)) === cnpj)
+    : false
+  if (duplicatedCnpj) {
+    throw new Error('Já existe uma empresa com este CNPJ.')
+  }
+
   if (cnpj && cnpj.length !== 14) {
     throw new Error('CNPJ deve conter 14 dígitos quando informado.')
   }
@@ -279,6 +444,16 @@ export function updateCompany(companyId: string, update: UpdateCompanyInput) {
   )
   if (duplicatedName) {
     throw new Error('Já existe uma empresa com este nome.')
+  }
+
+  const duplicatedCnpj = nextCnpj
+    ? companies.some(
+        (company, itemIndex) =>
+          itemIndex !== index && normalizeCnpj(cleanText(company.cnpj)) === nextCnpj
+      )
+    : false
+  if (duplicatedCnpj) {
+    throw new Error('Já existe uma empresa com este CNPJ.')
   }
 
   if (nextCnpj && nextCnpj.length !== 14) {
