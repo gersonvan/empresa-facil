@@ -1,0 +1,50 @@
+Eu entendi o gestão. Então, assim, Carol, esse modelo, né, assim, de gestão, ele vai ser o mais
+possível. E de empresa para empresa, essa tem sido a dificuldade que eu vejo, né,
+desse nicho de negócio, de mercado, um aplicativo, às vezes tem tanta informação
+que o cara é pequeno e ele não consegue nem usar, porque fica muita informação ali.
+Então, é possível que a gente enxugue tirando algumas coisas e colocando outras para atender
+aquele cliente. Aí ele fica quase como se fosse personalizado, né. Então, por exemplo,
+você falou com relação ao imposto. O imposto do simples, ele é bem, é bem, eu não vou
+matar dizer, é bem simples mesmo de fazer. Normalmente, uma empresa, quando ela encerra
+ali de faturamento, né, o cara faturou aqui 60 mil nesse mês. Como é que ele faturou
+60 mil pelas notas fiscais que ele tirou, né, pelo recebimento à vista, né, que a pessoa
+pagou em dinheiro lá, cartão, alguma coisa. Então, ele soma tudo aquilo ali, a receita
+dele, certo. Como o nosso aplicativo aí é um aplicativo gerencial, ele não é fiscal,
+ele pode ter recebido 60 mil, mas ele só vai tributar 40. Aqui no Brasil, tem uma cultura
+do cara não tributar tudo, porque é muito imposto. Então, no 60 mil de receita, esse
+aplicativo aí, que nós estamos desenvolvendo, ele vai ver exatamente o gerencial, o que
+realmente aconteceu, certo. O fiscal, o fiscal, eu não vou conseguir ver, eu vou conseguir ver
+assim, porque eu vou saber o que está pagando de imposto e vou dizer, rapaz, tu deixou de
+pagar, tu deixou de pagar tanto de imposto. Então, eu consigo ver, mas o que eu vou fazer
+é o gerencial, que é a realidade dele, é o que entra e o que sai. Então, esse cálculo aí
+já vai ser feito pelo contador, o contador vai dessa informação para alimentar esse
+aplicativo. Então, vamos lá, ele vai dizer, eu paguei tanto de simples nacional, então
+vai ser só um campo, pagou tanto de simples nacional. Quais são os impostos que a empresa
+vai informar para o aplicativo? O simples nacional, o INSS patronal e o FGTS. Entendeu? Eu não vejo
+outro, posso até ver se tem outro, mas não tem. Simples nacional, ele vai pagar dia 20,
+quando ele encerrar o factoramento do mês anterior, ele encerra dia 20 de abril e tem até
+20 de mal para pagar, aquela competência. Pronto, o INSS salve engana dia 7 e o FGTS
+dia 10, tem essas datas, porque ninguém vai se preocupar com data, porque ninguém sabe
+se ele vai pagar em dia, se ele não pagar em dia, aí cria assim uma outra conta, o juro
+desses impostos que ele não paga em dia, aí tem que lançar separado para a gente ir vendo
+quando ele está pagando em posto porque ele não paga em dia. Então, eu vou fazer esse
+desenho de alguns itens. Aí o restante não, a Luguel, conta de energia, é uma aba
+administrativa, então vai ter o quê? Despesas administrativas, vai ter um bloco. Aí eu vou
+fazer exatamente essa organização para ficar visível para o cliente, que quando ele for
+lançar a despesa na categoria, aí ele vai abrir a parte administrativa, aí tem lá, porrada
+de conta. Aí fornecedores, são os custos e a parte de impostos. Eu não vejo outras
+coisas aí, só vejo essas três, categoria mesmo. Aí despesa, limpeza, aí vai tudo na
+parte administrativa. A gente vai separar só, eu vou ver como é que, metodologicamente
+aqui, como é que a literatura separa e nós vamos separar igual, entendeu? De acordo com
+uma das correntes da contabilidade. Aí vai ficar uma coisa bacana, enxuta. Agora, ele
+precisa receber do contador essas informações dos impostos, se não a funcionária dele
+não vai conseguir lançar, que ela vai ser destruída para lançar de uma forma correta.
+Pronto, e aquilo ali é o real da empresa, é o real da empresa. Aí dá até pelo eveio, né?
+Ontem está deixando de pagar de imposto, pelo factoramento global, que ele só paga tanto
+de imposto, dá para fazer um cálculo para dizer, você deixa de pagar, agora se for
+tirado nota fiscal, aí tem que pagar imposto. Se for passar da maquineta, ele tem que pagar imposto.
+Ele só não paga imposto em uma situação, você receber dinheiro na mão, que aí ninguém sabe,
+né? Mas se for pago via PIX, via nota fiscal, transferência bancária, ele tem
+que pagar um imposto, porque senão ele acaba se complicando. Até porque tem que dar um
+imposto livre entre as entradas das notas fiscais e a saída, entendeu?
+Então vai ser um cálculo gerencial mesmo.
