@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "node tests/core-model.test.js && node tests/ingestion-pipeline.test.js && node tests/month-review-controls.test.js && node tests/projection-engine.test.js && node tests/deduction-estimation.test.js && node tests/deduction-automation.test.js",
+    "test": "node tests/core-model.test.js && node tests/ingestion-pipeline.test.js && node tests/month-review-controls.test.js && node tests/projection-engine.test.js && node tests/deduction-estimation.test.js && node tests/deduction-automation.test.js && node tests/company-store.test.js && node tests/company-context-isolation.test.js",
     "test:ui": "vitest run",
     "smoke:sync": "bash scripts/smoke-sync.sh"
   },
