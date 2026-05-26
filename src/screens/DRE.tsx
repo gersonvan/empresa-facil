@@ -18,6 +18,12 @@ interface DetailedSection {
   total: number
 }
 
+interface BucketSection {
+  title: string
+  rows: DetailedRow[]
+  total: number
+}
+
 function toMonthLabel(month: string) {
   const [year, monthRaw] = month.split('-')
   return `${monthRaw}/${year}`
@@ -99,18 +105,116 @@ function buildDetailedSections({ companyId, month }: { companyId: string; month:
   ]
 }
 
+function classifyExpenseBucket(categoryName: string) {
+  const normalized = categoryName.toLocaleLowerCase('pt-BR')
+
+  if (
+    normalized.includes('imposto') ||
+    normalized.includes('tribut') ||
+    normalized.includes('taxa') ||
+    normalized.includes('fgts') ||
+    normalized.includes('inss') ||
+    normalized.includes('simples')
+  ) {
+    return 'taxes'
+  }
+
+  if (
+    normalized.includes('cartão') ||
+    normalized.includes('cartao') ||
+    normalized.includes('banc') ||
+    normalized.includes('juros') ||
+    normalized.includes('financi') ||
+    normalized.includes('emprést') ||
+    normalized.includes('emprest') ||
+    normalized.includes('parcel') ||
+    normalized.includes('tarifa')
+  ) {
+    return 'financial'
+  }
+
+  if (
+    normalized.includes('frete') ||
+    normalized.includes('logística') ||
+    normalized.includes('logistica') ||
+    normalized.includes('matéria') ||
+    normalized.includes('materia') ||
+    normalized.includes('insumo') ||
+    normalized.includes('estoque') ||
+    normalized.includes('terceir') ||
+    normalized.includes('comiss') ||
+    normalized.includes('produção') ||
+    normalized.includes('produc') ||
+    normalized.includes('custo direto')
+  ) {
+    return 'direct'
+  }
+
+  return 'operational'
+}
+
+function buildExpenseBuckets(entries: Array<{ categoryName: string; amount: number }>): BucketSection[] {
+  const buckets = {
+    direct: new Map<string, number>(),
+    operational: new Map<string, number>(),
+    financial: new Map<string, number>(),
+    taxes: new Map<string, number>(),
+  }
+
+  for (const entry of entries) {
+    const bucket = classifyExpenseBucket(entry.categoryName)
+    const current = buckets[bucket].get(entry.categoryName) ?? 0
+    buckets[bucket].set(entry.categoryName, current + entry.amount)
+  }
+
+  function mapRows(group: Map<string, number>) {
+    return [...group.entries()]
+      .map(([label, amount]) => ({ label, amount }))
+      .sort((left, right) => right.amount - left.amount)
+  }
+
+  return [
+    {
+      title: 'CUSTOS DIRETOS',
+      rows: mapRows(buckets.direct),
+      total: [...buckets.direct.values()].reduce((accumulator, amount) => accumulator + amount, 0),
+    },
+    {
+      title: 'DESPESAS ADMINISTRATIVAS / OPERACIONAIS',
+      rows: mapRows(buckets.operational),
+      total: [...buckets.operational.values()].reduce((accumulator, amount) => accumulator + amount, 0),
+    },
+    {
+      title: 'DESPESAS FINANCEIRAS',
+      rows: mapRows(buckets.financial),
+      total: [...buckets.financial.values()].reduce((accumulator, amount) => accumulator + amount, 0),
+    },
+    {
+      title: 'IMPOSTOS, TAXAS E CONTRIBUIÇÕES',
+      rows: mapRows(buckets.taxes),
+      total: [...buckets.taxes.values()].reduce((accumulator, amount) => accumulator + amount, 0),
+    },
+  ]
+}
+
 export default function DRE() {
   const navigate = useNavigate()
   const overview = getMonthlyOverview()
   const monthContext = getMonthContext()
   const activeCompany = getActiveCompany()
   const detailedSections = buildDetailedSections({ companyId: monthContext.companyId, month: monthContext.month })
+  const expenseEntries = listLaunchEntries({ companyId: monthContext.companyId, month: monthContext.month, costType: 'company' })
+    .filter((entry) => entry.dreGroup === 'expenses')
+    .map((entry) => ({ categoryName: entry.categoryName, amount: entry.amount }))
+  const expenseBuckets = buildExpenseBuckets(expenseEntries)
+  const financialIncome = overview.summary.financialIncome
 
   const revenueTotal = detailedSections.find((section) => section.key === 'revenue')?.total ?? 0
   const deductionsTotal = detailedSections.find((section) => section.key === 'deductions')?.total ?? 0
-  const expensesTotal = detailedSections.find((section) => section.key === 'expenses')?.total ?? 0
+  const expensesTotal = expenseBuckets.reduce((accumulator, section) => accumulator + section.total, 0)
   const netRevenue = revenueTotal - deductionsTotal
-  const operatingResult = netRevenue - expensesTotal
+  const resultBeforeFinancial = netRevenue - expensesTotal
+  const operatingResult = resultBeforeFinancial + financialIncome
 
   function downloadTextFile({ content, fileName, mimeType }: { content: string; fileName: string; mimeType: string }) {
     const blob = new Blob([content], { type: mimeType })
@@ -208,10 +312,58 @@ export default function DRE() {
               </div>
             ))}
 
+            <div className={styles.bucketGrid}>
+              {expenseBuckets.map((bucket) => (
+                <div key={bucket.title} className={styles.bucketSection}>
+                  <div className={styles.statementSectionHeader}>
+                    <h2 className={styles.statementTitle}>{bucket.title}</h2>
+                    <strong className={styles.statementTotal}>{formatStatementValue(bucket.total, { enforceNegativeStyle: true })}</strong>
+                  </div>
+
+                  {bucket.rows.length === 0 ? (
+                    <p className={styles.emptyState}>Sem lançamentos neste bloco para o mês selecionado.</p>
+                  ) : (
+                    <ul className={styles.statementRows}>
+                      {bucket.rows.map((row) => (
+                        <li key={`${bucket.title}-${row.label}`} className={styles.statementRow}>
+                          <span>{row.label}</span>
+                          <strong>{formatStatementValue(row.amount, { enforceNegativeStyle: true })}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.statementSection}>
+              <div className={styles.statementSectionHeader}>
+                <h2 className={styles.statementTitle}>RECEITAS FINANCEIRAS</h2>
+                <strong className={styles.statementTotal}>{formatStatementValue(financialIncome)}</strong>
+              </div>
+
+              {financialIncome === 0 ? (
+                <p className={styles.emptyState}>Sem lançamentos financeiros no mês selecionado.</p>
+              ) : (
+                <ul className={styles.statementRows}>
+                  <li className={styles.statementRow}>
+                    <span>Receitas financeiras</span>
+                    <strong>{formatStatementValue(financialIncome)}</strong>
+                  </li>
+                </ul>
+              )}
+            </div>
+
             <div className={styles.finalTotals}>
               <div className={styles.finalRow}>
                 <span>RECEITA LÍQUIDA</span>
                 <strong>{formatStatementValue(netRevenue)}</strong>
+              </div>
+              <div className={styles.finalRow}>
+                <span>RESULTADO ANTES DAS RECEITAS FINANCEIRAS</span>
+                <strong className={resultBeforeFinancial >= 0 ? styles.pos : styles.neg}>
+                  {formatStatementValue(resultBeforeFinancial)}
+                </strong>
               </div>
               <div className={styles.finalRow}>
                 <span>RESULTADO OPERACIONAL</span>

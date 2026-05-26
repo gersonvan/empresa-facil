@@ -58,6 +58,18 @@
   gap: 6px;
 }
 
+.bucketGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.bucketSection {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--color-surface) 84%, var(--color-accent-soft));
+}
+
 .statementRow {
   display: flex;
   justify-content: space-between;
