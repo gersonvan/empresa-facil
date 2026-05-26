@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import CompanySwitcher from './CompanySwitcher'
 import ThemeToggle from './ThemeToggle'
 import styles from './ScreenContainer.module.css'
 
@@ -15,7 +16,10 @@ export default function ScreenContainer({ title, children }: ScreenContainerProp
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.subtitle}>Interface alinhada aos tokens do sistema.</p>
         </div>
-        <ThemeToggle />
+        <div className={styles.headerControls}>
+          <CompanySwitcher />
+          <ThemeToggle />
+        </div>
       </header>
       <div className={styles.body}>{children}</div>
     </div>

@@ -12,6 +12,12 @@
   gap: 16px;
 }
 
+.headerControls {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
 .headingGroup {
   min-width: 0;
 }
@@ -38,6 +44,10 @@
 @media (min-width: 768px) {
   .container {
     padding: 24px 32px;
+  }
+
+  .headerControls {
+    gap: 12px;
   }
 
   .title {

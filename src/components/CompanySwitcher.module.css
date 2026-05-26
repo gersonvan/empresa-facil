@@ -1,0 +1,28 @@
+.field {
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.field select {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+@media (max-width: 767px) {
+  .field {
+    min-width: 160px;
+    justify-items: end;
+  }
+
+  .field select {
+    max-width: 200px;
+  }
+}

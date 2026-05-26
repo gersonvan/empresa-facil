@@ -14,6 +14,7 @@ const navItems = [
 ]
 
 const settingsItems = [
+  { path: '/companies', label: 'Empresas' },
   { path: '/tax-profile', label: 'Tributação' },
   { path: '/categories', label: 'Categorias' },
   { path: '/chart-of-accounts', label: 'Plano' },

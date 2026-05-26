@@ -4,11 +4,11 @@ import {
   createSimplesRuleCatalog,
   type MonthlyOverview,
 } from '../calculations'
+import { getActiveCompany } from '../companyStore'
 import { monthLifecycleStore } from '../monthLifecycle'
 import { listLaunchEntries, listLaunchLines } from '../launchStore'
 
 const DEFAULT_COMPANY_NAME = 'Empresa ativa'
-const COMPANY_ID_STORAGE_KEY = 'empresa-facil:active-company-id'
 
 function monthFromNow() {
   const now = new Date()
@@ -17,49 +17,35 @@ function monthFromNow() {
 }
 
 function inferMonthContext() {
+  const activeCompany = getActiveCompany()
+  const companyId = activeCompany?.id ?? ''
+  const companyName = activeCompany?.name ?? DEFAULT_COMPANY_NAME
   const month = monthFromNow()
-  const monthEntries = listLaunchEntries({ month, costType: 'all' })
+
+  const monthEntries = listLaunchEntries({ companyId, month, costType: 'all' })
   if (monthEntries.length > 0) {
     return {
-      companyId: monthEntries[0].companyId,
-      companyName: DEFAULT_COMPANY_NAME,
+      companyId,
+      companyName,
       month,
     }
   }
 
-  const latestEntries = listLaunchEntries({ costType: 'all' })
+  const latestEntries = listLaunchEntries({ companyId, costType: 'all' })
   if (latestEntries.length > 0) {
     const latestMonth = latestEntries[0].month
     return {
-      companyId: latestEntries[0].companyId,
-      companyName: DEFAULT_COMPANY_NAME,
+      companyId,
+      companyName,
       month: latestMonth,
     }
   }
 
   return {
-    companyId: getOrCreateActiveCompanyId(),
-    companyName: DEFAULT_COMPANY_NAME,
+    companyId,
+    companyName,
     month,
   }
-}
-
-function getOrCreateActiveCompanyId() {
-  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
-    return `company-${Date.now()}`
-  }
-
-  const stored = window.localStorage.getItem(COMPANY_ID_STORAGE_KEY)
-  if (stored && stored.trim()) {
-    return stored
-  }
-
-  const next =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? `company-${crypto.randomUUID()}`
-      : `company-${Date.now()}`
-  window.localStorage.setItem(COMPANY_ID_STORAGE_KEY, next)
-  return next
 }
 
 function toRuleVersion(month: string) {
