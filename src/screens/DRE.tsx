@@ -216,6 +216,10 @@ export default function DRE() {
   const resultBeforeFinancial = netRevenue - expensesTotal
   const operatingResult = resultBeforeFinancial + financialIncome
 
+  function printDre() {
+    window.print()
+  }
+
   function downloadTextFile({ content, fileName, mimeType }: { content: string; fileName: string; mimeType: string }) {
     const blob = new Blob([content], { type: mimeType })
     const url = URL.createObjectURL(blob)
@@ -413,6 +417,7 @@ export default function DRE() {
             ))}
           </ul>
           <div className={styles.actions}>
+            <Button size="sm" variant="primary" onClick={printDre}>Imprimir DRE</Button>
             <Button size="sm" variant="secondary" onClick={exportSummaryJson}>Exportar resumo (JSON)</Button>
             <Button size="sm" variant="secondary" onClick={exportSummaryCsv}>Exportar resumo (CSV)</Button>
             <Button size="sm" variant="outline" onClick={() => navigate('/month-review')}>Abrir fechamento</Button>

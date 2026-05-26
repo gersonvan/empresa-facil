@@ -184,6 +184,76 @@
   gap: 8px;
 }
 
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  :global(body) {
+    background: #ffffff !important;
+  }
+
+  :global(nav) {
+    display: none !important;
+  }
+
+  .grid {
+    display: block;
+  }
+
+  .summaryCard,
+  .actions,
+  .groupList,
+  .groupRow {
+    display: none !important;
+  }
+
+  .reportCard {
+    border: 0;
+    box-shadow: none;
+    background: #ffffff;
+    break-inside: avoid;
+  }
+
+  .reportHeader,
+  .statementSection,
+  .bucketSection,
+  .finalTotals {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .statementSection,
+  .bucketSection,
+  .finalTotals {
+    border-color: #d0d0d0;
+    background: #ffffff;
+  }
+
+  .statementTable,
+  .bucketGrid {
+    gap: 10px;
+  }
+
+  .sectionTitle {
+    margin-top: 0;
+  }
+
+  .reportHeader {
+    font-size: 11px;
+  }
+
+  .statementTitle,
+  .finalRow {
+    color: #111111;
+  }
+
+  .emptyState {
+    color: #555555;
+  }
+}
+
 @media (min-width: 960px) {
   .grid {
     grid-template-columns: 1.4fr 1fr;

@@ -105,3 +105,16 @@ a {
 #root {
   height: 100%;
 }
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    background: #ffffff !important;
+  }
+
+  body {
+    overflow: visible;
+  }
+}
