@@ -25,6 +25,10 @@ function loadConfig() {
     smtpUser: process.env.SMTP_USER || "",
     smtpPass: process.env.SMTP_PASS || "",
     smtpFrom: process.env.SMTP_FROM || "EmpresaFácil <noreply@empresafacil.app>",
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY || "",
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+    stripePricePro: process.env.STRIPE_PRICE_PRO || "",
+    stripePriceBusiness: process.env.STRIPE_PRICE_BUSINESS || "",
   };
 }
 

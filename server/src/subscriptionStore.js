@@ -71,6 +71,61 @@ class SubscriptionStore {
     return PLAN_LIMITS[subscription?.plan ?? 'free']
   }
 
+  /**
+   * Salva o stripe_customer_id (chamado após criar checkout session).
+   */
+  async setStripeCustomer(companyId, stripeCustomerId) {
+    if (!stripeCustomerId) return
+    await this.pool.query(
+      `UPDATE subscriptions
+       SET stripe_customer_id = $1, updated_at = NOW()
+       WHERE company_id = $2`,
+      [stripeCustomerId, companyId]
+    )
+  }
+
+  /**
+   * Atualiza campos Stripe após checkout.session.completed.
+   */
+  async setStripeSubscription(companyId, { stripeCustomerId, stripeSubscriptionId, status }) {
+    await this.pool.query(
+      `UPDATE subscriptions
+       SET stripe_customer_id = COALESCE($1, stripe_customer_id),
+           stripe_subscription_id = $2,
+           status = $3,
+           updated_at = NOW()
+       WHERE company_id = $4`,
+      [stripeCustomerId, stripeSubscriptionId, status, companyId]
+    )
+  }
+
+  /**
+   * Atualiza o status e o período atual.
+   */
+  async updateStatus(companyId, status, currentPeriodEnd) {
+    await this.pool.query(
+      `UPDATE subscriptions
+       SET status = $1,
+           current_period_end = $2,
+           updated_at = NOW()
+       WHERE company_id = $3`,
+      [status, currentPeriodEnd, companyId]
+    )
+  }
+
+  /**
+   * Encontra o companyId a partir do stripe_customer_id.
+   * Usado nos webhooks.
+   */
+  async findCompanyByStripeCustomer(stripeCustomerId) {
+    if (!stripeCustomerId) return null
+    const result = await this.pool.query(
+      'SELECT company_id FROM subscriptions WHERE stripe_customer_id = $1',
+      [stripeCustomerId]
+    )
+    return result.rows[0]?.company_id ?? null
+  }
+
   /** Lista todas as assinaturas (uso admin). */
   async listAll({ limit = 50, offset = 0 } = {}) {
     const result = await this.pool.query(

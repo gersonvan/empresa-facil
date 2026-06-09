@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ScreenContainer from '../components/ScreenContainer'
 import { Button, Card } from '../components/ui'
 import { getActiveCompany } from '../companyStore'
@@ -66,6 +67,8 @@ function authHeader(): Record<string, string> {
 export default function Members() {
   const company = getActiveCompany()
   const companyId = company?.id
+  const [searchParams, setSearchParams] = useSearchParams()
+  const checkoutStatus = searchParams.get('checkout') // 'success' | 'cancelled' | null
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [members, setMembers] = useState<Member[]>([])
@@ -119,6 +122,39 @@ export default function Members() {
   // Papel do usuário atual nesta empresa
   const myMembership = members.find((m) => m.user_id === currentUser?.id)
   const isOwner = myMembership?.role === 'owner'
+
+  // ── Checkout / Upgrade ────────────────────────────────────────────────────────
+
+  const [upgrading, setUpgrading] = useState(false)
+  const [upgradeError, setUpgradeError] = useState<string | null>(null)
+
+  async function handleUpgrade(plan: 'pro' | 'business') {
+    if (!companyId) return
+    setUpgrading(true)
+    setUpgradeError(null)
+    try {
+      const res = await fetch(`${API_URL}/billing/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ companyId, plan }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { url: string }
+        window.location.href = data.url
+      } else {
+        const body = await res.json() as { error: string }
+        if (body.error === 'billing_unavailable') {
+          setUpgradeError('Pagamentos não disponíveis no momento. Entre em contato com o suporte.')
+        } else {
+          setUpgradeError('Erro ao iniciar checkout. Tente novamente.')
+        }
+      }
+    } catch {
+      setUpgradeError('Sem conexão com o servidor.')
+    } finally {
+      setUpgrading(false)
+    }
+  }
 
   // ── Convidar ──────────────────────────────────────────────────────────────────
 
@@ -206,6 +242,32 @@ export default function Members() {
   return (
     <ScreenContainer title="Equipe">
 
+      {/* Feedback pós-checkout */}
+      {checkoutStatus === 'success' && (
+        <div className={styles.checkoutSuccess}>
+          ✓ Assinatura ativada com sucesso! Seu plano foi atualizado.
+          <button
+            type="button"
+            className={styles.dismissBtn}
+            onClick={() => { setSearchParams({}); load() }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {checkoutStatus === 'cancelled' && (
+        <div className={styles.checkoutCancelled}>
+          O checkout foi cancelado. Você pode tentar novamente quando quiser.
+          <button
+            type="button"
+            className={styles.dismissBtn}
+            onClick={() => setSearchParams({})}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Banner de plano */}
       {subscription && (
         <div className={styles.planBanner}>
@@ -222,6 +284,35 @@ export default function Members() {
               Upgrade para Pro para convidar mais pessoas
             </span>
           )}
+        </div>
+      )}
+
+      {/* Card de upgrade — apenas para owners em plano free */}
+      {isOwner && subscription && subscription.plan === 'free' && (
+        <div className={styles.upgradeCard}>
+          <p className={styles.upgradeTitle}>Expanda sua equipe</p>
+          <p className={styles.upgradeDesc}>
+            O plano Free inclui apenas 1 membro. Faça upgrade para convidar mais colaboradores.
+          </p>
+          <div className={styles.upgradeActions}>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => handleUpgrade('pro')}
+              disabled={upgrading}
+            >
+              {upgrading ? 'Aguarde…' : 'Upgrade para Pro — até 3 membros'}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => handleUpgrade('business')}
+              disabled={upgrading}
+            >
+              Business — ilimitado
+            </Button>
+          </div>
+          {upgradeError && <p className={styles.errorMsg}>{upgradeError}</p>}
         </div>
       )}
 

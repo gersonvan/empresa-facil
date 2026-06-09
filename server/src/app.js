@@ -9,6 +9,7 @@ import { authRoutes } from "./routes/auth.js";
 import { membersRoutes } from "./routes/members.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { adminRoutes } from "./routes/admin.js";
+import { billingRoutes } from "./routes/billing.js";
 
 async function buildApp({ config, pool, eventStore, userStore, membershipStore, magicLinkStore, subscriptionStore, emailService }) {
   const app = Fastify({ logger: true });
@@ -58,6 +59,7 @@ async function buildApp({ config, pool, eventStore, userStore, membershipStore, 
   await app.register(syncRoutes);
   await app.register(backupRoutes);
   await app.register(adminRoutes);
+  await app.register(billingRoutes);
 
   return app;
 }
