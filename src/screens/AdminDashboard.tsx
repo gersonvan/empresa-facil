@@ -120,7 +120,10 @@ export default function AdminDashboard() {
       {/* Cadastros recentes */}
       {stats && stats.recentUsers.length > 0 && (
         <Card className={styles.recentCard}>
-          <h2 className={styles.sectionTitle}>Últimos cadastros</h2>
+          <div className={styles.recentHeader}>
+            <h2 className={styles.sectionTitle}>Últimos cadastros</h2>
+            <Link to="/admin/users" className={styles.viewAllLink}>Ver todos →</Link>
+          </div>
           <ul className={styles.recentList}>
             {stats.recentUsers.map((u) => (
               <li key={u.id} className={styles.recentRow}>

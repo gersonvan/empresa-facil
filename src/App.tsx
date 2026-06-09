@@ -8,6 +8,7 @@ import AuthCallback from './screens/AuthCallback'
 import Onboarding from './screens/Onboarding'
 import AdminDashboard from './screens/AdminDashboard'
 import AdminCompany from './screens/AdminCompany'
+import AdminUsers from './screens/AdminUsers'
 
 export default function App() {
   return (
@@ -33,6 +34,16 @@ export default function App() {
           <RequireAdmin>
             <Shell>
               <AdminCompany />
+            </Shell>
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <RequireAdmin>
+            <Shell>
+              <AdminUsers />
             </Shell>
           </RequireAdmin>
         }
