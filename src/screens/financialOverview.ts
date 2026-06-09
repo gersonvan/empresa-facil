@@ -93,8 +93,20 @@ function createFiscalRuleCatalog(month: string) {
   })
 }
 
-export function getMonthlyOverview(): MonthlyOverview {
-  const monthContext = inferMonthContext()
+export function getMonthContext(selectedMonth?: string) {
+  if (selectedMonth) {
+    const activeCompany = getActiveCompany()
+    return {
+      companyId: activeCompany?.id ?? '',
+      companyName: activeCompany?.name ?? DEFAULT_COMPANY_NAME,
+      month: selectedMonth,
+    }
+  }
+  return inferMonthContext()
+}
+
+export function getMonthlyOverview(selectedMonth?: string): MonthlyOverview {
+  const monthContext = getMonthContext(selectedMonth)
   const fiscalRuleCatalog = createFiscalRuleCatalog(monthContext.month)
   const ruleVersion = toRuleVersion(monthContext.month)
 
@@ -121,10 +133,6 @@ export function getMonthlyOverview(): MonthlyOverview {
   })
 
   return buildMonthlyDreOverview(calculation)
-}
-
-export function getMonthContext() {
-  return inferMonthContext()
 }
 
 export function formatCurrency(value: number) {

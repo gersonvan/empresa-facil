@@ -1,0 +1,45 @@
+.nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 3px 4px;
+}
+
+.arrow {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: calc(var(--radius-button) - 2px);
+  transition: background-color 0.15s, color 0.15s;
+  /* optical alignment for single chevron glyphs */
+  padding-bottom: 1px;
+}
+
+.arrow:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.arrow:disabled {
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+}
+
+.label {
+  min-width: 120px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  user-select: none;
+}

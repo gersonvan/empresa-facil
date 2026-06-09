@@ -1,14 +1,20 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
+import MonthNav from '../components/MonthNav'
 import { useNavigate } from 'react-router-dom'
 import { formatCurrency, getMonthContext, getMonthlyOverview } from './financialOverview'
 import { listLaunchEntries } from '../launchStore'
+import { useMonthNav } from '../hooks/useMonthNav'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const overview = getMonthlyOverview()
-  const monthContext = getMonthContext()
+  // Inicia no mês inferido (mês atual ou último com lançamentos)
+  const inferredMonth = getMonthContext().month
+  const { month, label, prev, next, isAtLatest } = useMonthNav(inferredMonth)
+
+  const overview = getMonthlyOverview(month)
+  const monthContext = getMonthContext(month)
 
   const topCategoryExpenses = listLaunchEntries({
     companyId: monthContext.companyId,
@@ -40,6 +46,7 @@ export default function Dashboard() {
   return (
     <ScreenContainer title="Dashboard">
       <div className={styles.actions}>
+        <MonthNav label={label} onPrev={prev} onNext={next} isAtLatest={isAtLatest} />
         <Button size="sm" variant="outline" onClick={() => navigate('/launch')}>
           Registrar lançamento
         </Button>

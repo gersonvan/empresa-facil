@@ -1,10 +1,12 @@
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
+import MonthNav from '../components/MonthNav'
 import { useNavigate } from 'react-router-dom'
 import { jsPDF } from 'jspdf'
 import { getActiveCompany } from '../companyStore'
 import { listLaunchEntries } from '../launchStore'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
+import { useMonthNav } from '../hooks/useMonthNav'
 import styles from './DRE.module.css'
 
 interface DetailedRow {
@@ -205,8 +207,11 @@ function buildExpenseBuckets(entries: Array<{ categoryName: string; amount: numb
 
 export default function DRE() {
   const navigate = useNavigate()
-  const overview = getMonthlyOverview()
-  const monthContext = getMonthContext()
+  const inferredMonth = getMonthContext().month
+  const { month, label, prev, next, isAtLatest } = useMonthNav(inferredMonth)
+
+  const overview = getMonthlyOverview(month)
+  const monthContext = getMonthContext(month)
   const activeCompany = getActiveCompany()
   const detailedSections = buildDetailedSections({ companyId: monthContext.companyId, month: monthContext.month })
   const expenseEntries = listLaunchEntries({ companyId: monthContext.companyId, month: monthContext.month, costType: 'company' })
@@ -428,6 +433,9 @@ export default function DRE() {
 
   return (
     <ScreenContainer title="DRE">
+      <div className={styles.monthNavRow}>
+        <MonthNav label={label} onPrev={prev} onNext={next} isAtLatest={isAtLatest} />
+      </div>
       <div className={styles.grid}>
         <Card className={styles.reportCard}>
           <header className={styles.reportHeader}>

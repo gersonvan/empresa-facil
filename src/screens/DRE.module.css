@@ -1,3 +1,9 @@
+.monthNavRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
 .grid {
   display: grid;
   gap: 16px;
