@@ -279,10 +279,14 @@ interface ListLaunchEntriesFilters {
   companyId?: string
   month?: string
   costType?: 'company' | 'personal' | 'all'
+  dreGroup?: DreGroup | 'all'
+  categoryId?: string
+  search?: string
 }
 
 export function listLaunchEntries(filters: ListLaunchEntriesFilters = {}) {
-  const { companyId, month, costType = 'all' } = filters
+  const { companyId, month, costType = 'all', dreGroup = 'all', categoryId, search } = filters
+  const searchLower = search?.trim().toLowerCase()
 
   return readEntries()
     .filter((entry) => {
@@ -295,6 +299,18 @@ export function listLaunchEntries(filters: ListLaunchEntriesFilters = {}) {
       }
 
       if (costType !== 'all' && entry.costType !== costType) {
+        return false
+      }
+
+      if (dreGroup !== 'all' && entry.dreGroup !== dreGroup) {
+        return false
+      }
+
+      if (categoryId && entry.categoryId !== categoryId) {
+        return false
+      }
+
+      if (searchLower && !entry.description.toLowerCase().includes(searchLower)) {
         return false
       }
 

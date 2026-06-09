@@ -8,6 +8,7 @@ import { monthLifecycleStore } from '../monthLifecycle'
 import styles from './Records.module.css'
 
 type CostTypeFilter = 'all' | 'company' | 'personal'
+type DreGroupFilter = 'all' | DreGroup
 
 interface EditState {
   entryId: string
@@ -69,8 +70,27 @@ export default function Records() {
   const monthContext = getMonthContext()
   const [monthFilter, setMonthFilter] = useState(monthFromNow())
   const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>('all')
+  const [dreGroupFilter, setDreGroupFilter] = useState<DreGroupFilter>('all')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [searchText, setSearchText] = useState('')
   const [editState, setEditState] = useState<EditState | null>(null)
   const [message, setMessage] = useState('')
+
+  // Todas as categorias para o filtro (sem restrição de tipo/natureza)
+  const allCategories = useMemo(() => listCategories(), [])
+
+  // Total sem filtros de busca — para mostrar "X de Y"
+  const totalUnfiltered = useMemo(
+    () =>
+      listLaunchEntries({
+        companyId: monthContext.companyId,
+        month: monthFilter,
+        costType: costTypeFilter,
+        dreGroup: dreGroupFilter,
+        categoryId: categoryFilter || undefined,
+      }).length,
+    [categoryFilter, costTypeFilter, dreGroupFilter, monthContext.companyId, monthFilter]
+  )
 
   const entries = useMemo(
     () =>
@@ -78,9 +98,25 @@ export default function Records() {
         companyId: monthContext.companyId,
         month: monthFilter,
         costType: costTypeFilter,
+        dreGroup: dreGroupFilter,
+        categoryId: categoryFilter || undefined,
+        search: searchText || undefined,
       }),
-    [costTypeFilter, monthContext.companyId, monthFilter]
+    [categoryFilter, costTypeFilter, dreGroupFilter, monthContext.companyId, monthFilter, searchText]
   )
+
+  const hasActiveFilters =
+    costTypeFilter !== 'all' ||
+    dreGroupFilter !== 'all' ||
+    categoryFilter !== '' ||
+    searchText !== ''
+
+  function clearFilters() {
+    setCostTypeFilter('all')
+    setDreGroupFilter('all')
+    setCategoryFilter('')
+    setSearchText('')
+  }
 
   const availableCategories = useMemo(() => {
     if (!editState) {
@@ -204,7 +240,14 @@ export default function Records() {
   return (
     <ScreenContainer title="Ver Registros">
       <Card className={styles.filtersCard}>
-        <h2 className={styles.sectionTitle}>Filtros</h2>
+        <div className={styles.filtersHeader}>
+          <h2 className={styles.sectionTitle}>Filtros</h2>
+          {hasActiveFilters && (
+            <button type="button" className={styles.clearBtn} onClick={clearFilters}>
+              Limpar filtros
+            </button>
+          )}
+        </div>
         <div className={styles.filtersGrid}>
           <label className={styles.field} htmlFor="records-month-filter">
             <span>Mês</span>
@@ -227,6 +270,54 @@ export default function Records() {
               <option value="personal">Pessoal</option>
             </select>
           </label>
+          <label className={styles.field} htmlFor="records-group-filter">
+            <span>Natureza</span>
+            <select
+              id="records-group-filter"
+              value={dreGroupFilter}
+              onChange={(event) => setDreGroupFilter(event.target.value as DreGroupFilter)}
+            >
+              <option value="all">Todas</option>
+              <option value="revenue">Receita</option>
+              <option value="deductions">Dedução</option>
+              <option value="expenses">Despesa</option>
+            </select>
+          </label>
+          <label className={styles.field} htmlFor="records-category-filter">
+            <span>Categoria</span>
+            <select
+              id="records-category-filter"
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+            >
+              <option value="">Todas</option>
+              {allCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className={`${styles.field} ${styles.searchField}`} htmlFor="records-search">
+            <span>Buscar descrição</span>
+            <div className={styles.searchWrapper}>
+              <input
+                id="records-search"
+                type="search"
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder="Digite para filtrar…"
+              />
+              {searchText && (
+                <button
+                  type="button"
+                  className={styles.clearSearch}
+                  onClick={() => setSearchText('')}
+                  aria-label="Limpar busca"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </label>
         </div>
       </Card>
 
@@ -246,7 +337,14 @@ export default function Records() {
       </div>
 
       <Card>
-        <h2 className={styles.sectionTitle}>Lançamentos</h2>
+        <div className={styles.listHeader}>
+          <h2 className={styles.sectionTitle}>Lançamentos</h2>
+          {hasActiveFilters && (
+            <span className={styles.resultCount}>
+              {entries.length} de {totalUnfiltered}
+            </span>
+          )}
+        </div>
         <p className={styles.warning}>Atenção: após o fechamento do mês, edição e remoção ficam bloqueadas.</p>
         {message ? <p className={styles.message}>{message}</p> : null}
 
