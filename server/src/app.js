@@ -10,10 +10,11 @@ import { membersRoutes } from "./routes/members.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { adminRoutes } from "./routes/admin.js";
 
-async function buildApp({ config, eventStore, userStore, membershipStore, magicLinkStore, subscriptionStore, emailService }) {
+async function buildApp({ config, pool, eventStore, userStore, membershipStore, magicLinkStore, subscriptionStore, emailService }) {
   const app = Fastify({ logger: true });
 
   app.decorate("config", config);
+  app.decorate("pool", pool);
   app.decorate("eventStore", eventStore);
   app.decorate("userStore", userStore);
   app.decorate("membershipStore", membershipStore);

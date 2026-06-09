@@ -18,6 +18,30 @@ async function membersRoutes(fastify) {
     return membershipStore.listByCompany(companyId)
   })
 
+  // ── Assinatura da empresa ─────────────────────────────────────────────────────
+
+  fastify.get('/api/companies/:companyId/subscription', { preHandler: requireAuth }, async (request, reply) => {
+    const { companyId } = request.params
+
+    const hasAccess = await membershipStore.hasAccess(request.user.userId, companyId)
+    if (!hasAccess) {
+      return reply.code(403).send({ error: 'acesso_negado' })
+    }
+
+    const subscription = await subscriptionStore.findOrCreateFree(companyId)
+    const members = await membershipStore.listByCompany(companyId)
+    const activeMemberCount = members.filter((m) => m.status === 'active').length
+    const limits = subscriptionStore.getLimits(subscription)
+
+    return {
+      plan: subscription.plan,
+      status: subscription.status,
+      memberCount: activeMemberCount,
+      maxMembers: limits.maxMembers,
+      historyMonths: limits.historyMonths,
+    }
+  })
+
   // ── Convidar usuário para uma empresa ────────────────────────────────────────
 
   fastify.post('/api/companies/:companyId/members/invite', { preHandler: requireAuth }, async (request, reply) => {

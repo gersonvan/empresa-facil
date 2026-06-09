@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
+import MonthNav from '../components/MonthNav'
 import { listCategories } from '../categoryStore'
 import { createLaunchEntry } from '../domain'
 import { listLaunchEntries, saveLaunchEntry } from '../launchStore'
@@ -8,6 +9,7 @@ import { MONTH_STATUS_VALUES } from '../domain'
 import { monthLifecycleStore } from '../monthLifecycle'
 import { getDeductionReconciliation, saveDeductionReconciliation } from '../reconciliationStore'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
+import { useMonthNav } from '../hooks/useMonthNav'
 import styles from './MonthReview.module.css'
 
 type MonthStatus = (typeof MONTH_STATUS_VALUES)[number]
@@ -19,14 +21,25 @@ const statusLabel: Record<MonthStatus, string> = {
 }
 
 export default function MonthReview() {
-  const month = getMonthContext()
-  const overview = getMonthlyOverview()
+  const { month: selectedMonth, label: monthLabel, prev, next, isAtLatest } = useMonthNav(
+    getMonthContext().month
+  )
+  const month = getMonthContext(selectedMonth)
+  const overview = getMonthlyOverview(selectedMonth)
+
   const [statusState, setStatusState] = useState(() =>
     monthLifecycleStore.getStatus({ companyId: month.companyId, month: month.month })
   )
   const [message, setMessage] = useState('')
   const [actualDeductionsInput, setActualDeductionsInput] = useState('')
   const status = statusState.status as MonthStatus
+
+  // Ao navegar para outro mês, recarrega o status e limpa o estado local
+  useEffect(() => {
+    setStatusState(monthLifecycleStore.getStatus({ companyId: month.companyId, month: month.month }))
+    setMessage('')
+    setActualDeductionsInput('')
+  }, [month.companyId, month.month])
 
   const nextActions = useMemo(() => {
     if (status === 'open') {
@@ -248,6 +261,9 @@ export default function MonthReview() {
 
   return (
     <ScreenContainer title="Revisão do Mês">
+      <div className={styles.monthNavRow}>
+        <MonthNav label={monthLabel} onPrev={prev} onNext={next} isAtLatest={isAtLatest} />
+      </div>
       <div className={styles.grid}>
         <Card>
           <h2 className={styles.sectionTitle}>Status do fechamento</h2>

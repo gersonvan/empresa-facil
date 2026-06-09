@@ -30,6 +30,16 @@ interface CurrentUser {
   isAdmin: boolean
 }
 
+interface Subscription {
+  plan: 'free' | 'pro' | 'business'
+  status: string
+  memberCount: number
+  maxMembers: number | null
+  historyMonths: number | null
+}
+
+const PLAN_LABELS: Record<string, string> = { free: 'Free', pro: 'Pro', business: 'Business' }
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -59,6 +69,7 @@ export default function Members() {
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [members, setMembers] = useState<Member[]>([])
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,9 +87,10 @@ export default function Members() {
     setLoading(true)
     setError(null)
     try {
-      const [meRes, membersRes] = await Promise.all([
+      const [meRes, membersRes, subRes] = await Promise.all([
         fetch(`${API_URL}/auth/me`, { headers: authHeader() }),
         fetch(`${API_URL}/api/companies/${companyId}/members`, { headers: authHeader() }),
+        fetch(`${API_URL}/api/companies/${companyId}/subscription`, { headers: authHeader() }),
       ])
 
       if (meRes.ok) {
@@ -90,6 +102,10 @@ export default function Members() {
         setMembers(await membersRes.json() as Member[])
       } else {
         setError('Não foi possível carregar os membros.')
+      }
+
+      if (subRes.ok) {
+        setSubscription(await subRes.json() as Subscription)
       }
     } catch {
       setError('Sem conexão com o servidor.')
@@ -189,6 +205,25 @@ export default function Members() {
 
   return (
     <ScreenContainer title="Equipe">
+
+      {/* Banner de plano */}
+      {subscription && (
+        <div className={styles.planBanner}>
+          <span className={`${styles.planChip} ${styles[`plan_${subscription.plan}`]}`}>
+            {PLAN_LABELS[subscription.plan]}
+          </span>
+          <span className={styles.planDetail}>
+            {subscription.maxMembers !== null
+              ? `${subscription.memberCount} de ${subscription.maxMembers} membro${subscription.maxMembers !== 1 ? 's' : ''}`
+              : `${subscription.memberCount} membro${subscription.memberCount !== 1 ? 's' : ''} · ilimitado`}
+          </span>
+          {subscription.plan === 'free' && (
+            <span className={styles.upgradeHint}>
+              Upgrade para Pro para convidar mais pessoas
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Formulário de convite — apenas para owners */}
       {isOwner && (

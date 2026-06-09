@@ -37,6 +37,7 @@ async function startServer() {
 
   const app = await buildApp({
     config,
+    pool,
     eventStore,
     userStore,
     membershipStore,

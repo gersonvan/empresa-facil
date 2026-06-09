@@ -1,3 +1,41 @@
+/* Plan banner */
+
+.planBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.planChip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.plan_free     { background: var(--color-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.plan_pro      { background: var(--color-accent-soft); color: var(--color-accent); }
+.plan_business { background: var(--color-positive-soft); color: var(--color-positive); }
+
+.planDetail {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.upgradeHint {
+  font-size: 12px;
+  color: var(--color-accent);
+  font-weight: 600;
+  margin-left: auto;
+}
+
 .inviteCard {
   margin-bottom: 12px;
 }
