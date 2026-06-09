@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setAuthToken } from '../authStore'
+import { API_URL } from '../config'
 import styles from './AuthCallback.module.css'
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -21,8 +22,25 @@ export default function AuthCallback() {
 
     if (token) {
       setAuthToken(token)
-      // Reload so syncClient.pull() runs with the new token before React mounts
-      window.location.replace('/dashboard')
+
+      // Verifica se o usuário precisa de onboarding antes de redirecionar
+      async function checkOnboarding() {
+        try {
+          const res = await fetch(`${API_URL}/api/onboarding/status`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          if (res.ok) {
+            const { needsOnboarding } = await res.json() as { needsOnboarding: boolean }
+            window.location.replace(needsOnboarding ? '/onboarding' : '/dashboard')
+            return
+          }
+        } catch {
+          // Backend indisponível — redireciona direto para o dashboard
+        }
+        window.location.replace('/dashboard')
+      }
+
+      checkOnboarding()
       return
     }
 

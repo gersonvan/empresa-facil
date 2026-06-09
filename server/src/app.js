@@ -7,6 +7,7 @@ import { syncRoutes } from "./routes/sync.js";
 import { backupRoutes } from "./routes/backup.js";
 import { authRoutes } from "./routes/auth.js";
 import { membersRoutes } from "./routes/members.js";
+import { onboardingRoutes } from "./routes/onboarding.js";
 
 async function buildApp({ config, eventStore, userStore, membershipStore, magicLinkStore, emailService }) {
   const app = Fastify({ logger: true });
@@ -49,6 +50,7 @@ async function buildApp({ config, eventStore, userStore, membershipStore, magicL
 
   await app.register(healthRoutes);
   await app.register(authRoutes);
+  await app.register(onboardingRoutes);
   await app.register(membersRoutes);
   await app.register(syncRoutes);
   await app.register(backupRoutes);
