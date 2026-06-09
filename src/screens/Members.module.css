@@ -83,6 +83,38 @@
   margin-left: auto;
 }
 
+/* Manage billing card */
+
+.manageCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.manageInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.manageTitle {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.manageDesc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
 /* Upgrade card */
 
 .upgradeCard {

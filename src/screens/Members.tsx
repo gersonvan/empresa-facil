@@ -5,6 +5,7 @@ import { Button, Card } from '../components/ui'
 import { getActiveCompany } from '../companyStore'
 import { getAuthToken } from '../authStore'
 import { API_URL } from '../config'
+import { invalidateSubscriptionCache } from '../hooks/useSubscription'
 import styles from './Members.module.css'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -128,6 +129,29 @@ export default function Members() {
   const [upgrading, setUpgrading] = useState(false)
   const [upgradeError, setUpgradeError] = useState<string | null>(null)
 
+  async function handleManageBilling() {
+    if (!companyId) return
+    setUpgrading(true)
+    setUpgradeError(null)
+    try {
+      const res = await fetch(`${API_URL}/billing/portal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ companyId }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { url: string }
+        window.location.href = data.url
+      } else {
+        setUpgradeError('Não foi possível abrir o portal de assinatura. Tente novamente.')
+      }
+    } catch {
+      setUpgradeError('Sem conexão com o servidor.')
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
   async function handleUpgrade(plan: 'pro' | 'business') {
     if (!companyId) return
     setUpgrading(true)
@@ -249,7 +273,7 @@ export default function Members() {
           <button
             type="button"
             className={styles.dismissBtn}
-            onClick={() => { setSearchParams({}); load() }}
+            onClick={() => { invalidateSubscriptionCache(); setSearchParams({}); load() }}
           >
             ✕
           </button>
@@ -284,6 +308,20 @@ export default function Members() {
               Upgrade para Pro para convidar mais pessoas
             </span>
           )}
+        </div>
+      )}
+
+      {/* Botão de gerenciar assinatura — owners em plano pago */}
+      {isOwner && subscription && subscription.plan !== 'free' && (
+        <div className={styles.manageCard}>
+          <div className={styles.manageInfo}>
+            <p className={styles.manageTitle}>Assinatura {PLAN_LABELS[subscription.plan]}</p>
+            <p className={styles.manageDesc}>Gerencie pagamento, faturas e cancelamento pelo portal Stripe.</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleManageBilling} disabled={upgrading}>
+            {upgrading ? 'Aguarde…' : 'Gerenciar assinatura'}
+          </Button>
+          {upgradeError && <p className={styles.errorMsg}>{upgradeError}</p>}
         </div>
       )}
 

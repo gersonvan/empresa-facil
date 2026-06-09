@@ -1,0 +1,54 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: conecte o repo no Render e ele detecta este arquivo automaticamente.
+
+services:
+  - type: web
+    name: empresafacil-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3333
+      - key: HOST
+        value: 0.0.0.0
+      # Defina as variáveis abaixo pelo painel do Render (não commitar valores reais)
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_BUSINESS
+        sync: false

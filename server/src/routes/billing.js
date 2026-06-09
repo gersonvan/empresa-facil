@@ -68,6 +68,36 @@ async function billingRoutes(fastify) {
     return { url: session.url }
   })
 
+  // ── Portal do cliente Stripe ──────────────────────────────────────────────────
+
+  fastify.post('/billing/portal', { preHandler: requireAuth }, async (request, reply) => {
+    if (!stripe) {
+      return reply.code(503).send({ error: 'billing_unavailable', message: 'Stripe não configurado.' })
+    }
+
+    const { companyId } = request.body ?? {}
+    if (!companyId) {
+      return reply.code(400).send({ error: 'companyId_required' })
+    }
+
+    const membership = await membershipStore.findByUserAndCompany(request.user.userId, companyId)
+    if (!membership || membership.role !== 'owner' || membership.status !== 'active') {
+      return reply.code(403).send({ error: 'apenas_owner_pode_acessar_portal' })
+    }
+
+    const subscription = await subscriptionStore.getByCompany(companyId)
+    if (!subscription?.stripe_customer_id) {
+      return reply.code(404).send({ error: 'cliente_stripe_nao_encontrado' })
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: subscription.stripe_customer_id,
+      return_url: `${config.frontendUrl}/members`,
+    })
+
+    return { url: session.url }
+  })
+
   // ── Webhook Stripe (escopo isolado para raw body) ─────────────────────────────
   // O Stripe exige o body RAW (Buffer) para validar a assinatura HMAC.
   // Registramos em um sub-plugin encapsulado com parser próprio.

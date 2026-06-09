@@ -261,19 +261,29 @@ class EventStore {
     }
   }
 
-  async pullEventsSince({ since = 0, deviceId, userId, limit = 500 }) {
+  async pullEventsSince({ since = 0, deviceId, userId, limit = 500, cutoffMs = null }) {
     const normalizedSince = Number.isFinite(Number(since)) ? Number(since) : 0;
     const normalizedLimit = Math.max(1, Math.min(1000, Number(limit) || 500));
 
     const client = await this.pool.connect();
     try {
-      // Se userId fornecido, filtra eventos do usuário — isolamento multi-tenant
-      const params = userId
-        ? [normalizedSince, userId, normalizedLimit + 1]
-        : [normalizedSince, normalizedLimit + 1];
+      // Constrói filtros dinâmicos preservando a ordem dos parâmetros
+      const params = [normalizedSince];
+      let extraFilters = '';
 
-      const userFilter = userId ? 'AND user_id = $2' : '';
-      const limitParam = userId ? '$3' : '$2';
+      if (userId) {
+        params.push(userId);
+        extraFilters += ` AND user_id = $${params.length}`;
+      }
+
+      // cutoffMs: limite de histórico por plano (event_timestamp_ms, não synced_at_ms)
+      if (cutoffMs !== null && Number.isFinite(Number(cutoffMs))) {
+        params.push(Number(cutoffMs));
+        extraFilters += ` AND event_timestamp_ms >= $${params.length}`;
+      }
+
+      params.push(normalizedLimit + 1);
+      const limitParam = `$${params.length}`;
 
       const rowsResult = await client.query(
         `
@@ -290,7 +300,7 @@ class EventStore {
             user_id,
             synced_at_ms
           FROM audit_events
-          WHERE synced_at_ms > $1 ${userFilter}
+          WHERE synced_at_ms > $1 ${extraFilters}
           ORDER BY synced_at_ms ASC, id ASC
           LIMIT ${limitParam}
         `,

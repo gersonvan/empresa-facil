@@ -10,6 +10,7 @@ import { monthLifecycleStore } from '../monthLifecycle'
 import { getDeductionReconciliation, saveDeductionReconciliation } from '../reconciliationStore'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
 import { useMonthNav } from '../hooks/useMonthNav'
+import { useSubscription, oldestAllowedMonth } from '../hooks/useSubscription'
 import styles from './MonthReview.module.css'
 
 type MonthStatus = (typeof MONTH_STATUS_VALUES)[number]
@@ -21,9 +22,12 @@ const statusLabel: Record<MonthStatus, string> = {
 }
 
 export default function MonthReview() {
-  const { month: selectedMonth, label: monthLabel, prev, next, isAtLatest } = useMonthNav(
-    getMonthContext().month
-  )
+  const subscription = useSubscription()
+  const oldest = oldestAllowedMonth(subscription?.historyMonths ?? null)
+  const { month: selectedMonth, label: monthLabel, prev, next, isAtLatest, isAtOldest } = useMonthNav({
+    initialMonth: getMonthContext().month,
+    oldestAllowedMonth: oldest,
+  })
   const month = getMonthContext(selectedMonth)
   const overview = getMonthlyOverview(selectedMonth)
 
@@ -262,7 +266,14 @@ export default function MonthReview() {
   return (
     <ScreenContainer title="Revisão do Mês">
       <div className={styles.monthNavRow}>
-        <MonthNav label={monthLabel} onPrev={prev} onNext={next} isAtLatest={isAtLatest} />
+        <MonthNav
+          label={monthLabel}
+          onPrev={prev}
+          onNext={next}
+          isAtLatest={isAtLatest}
+          isAtOldest={isAtOldest}
+          showUpgradeHint={isAtOldest && subscription?.plan === 'free'}
+        />
       </div>
       <div className={styles.grid}>
         <Card>

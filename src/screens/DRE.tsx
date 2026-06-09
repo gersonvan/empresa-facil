@@ -7,6 +7,7 @@ import { getActiveCompany } from '../companyStore'
 import { listLaunchEntries } from '../launchStore'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
 import { useMonthNav } from '../hooks/useMonthNav'
+import { useSubscription, oldestAllowedMonth } from '../hooks/useSubscription'
 import styles from './DRE.module.css'
 
 interface DetailedRow {
@@ -207,8 +208,13 @@ function buildExpenseBuckets(entries: Array<{ categoryName: string; amount: numb
 
 export default function DRE() {
   const navigate = useNavigate()
+  const subscription = useSubscription()
+  const oldest = oldestAllowedMonth(subscription?.historyMonths ?? null)
   const inferredMonth = getMonthContext().month
-  const { month, label, prev, next, isAtLatest } = useMonthNav(inferredMonth)
+  const { month, label, prev, next, isAtLatest, isAtOldest } = useMonthNav({
+    initialMonth: inferredMonth,
+    oldestAllowedMonth: oldest,
+  })
 
   const overview = getMonthlyOverview(month)
   const monthContext = getMonthContext(month)
@@ -434,7 +440,14 @@ export default function DRE() {
   return (
     <ScreenContainer title="DRE">
       <div className={styles.monthNavRow}>
-        <MonthNav label={label} onPrev={prev} onNext={next} isAtLatest={isAtLatest} />
+        <MonthNav
+          label={label}
+          onPrev={prev}
+          onNext={next}
+          isAtLatest={isAtLatest}
+          isAtOldest={isAtOldest}
+          showUpgradeHint={isAtOldest && subscription?.plan === 'free'}
+        />
       </div>
       <div className={styles.grid}>
         <Card className={styles.reportCard}>

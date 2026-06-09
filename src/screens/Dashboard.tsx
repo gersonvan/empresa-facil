@@ -5,13 +5,19 @@ import { useNavigate } from 'react-router-dom'
 import { formatCurrency, getMonthContext, getMonthlyOverview } from './financialOverview'
 import { listLaunchEntries } from '../launchStore'
 import { useMonthNav } from '../hooks/useMonthNav'
+import { useSubscription, oldestAllowedMonth } from '../hooks/useSubscription'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const subscription = useSubscription()
+  const oldest = oldestAllowedMonth(subscription?.historyMonths ?? null)
   // Inicia no mês inferido (mês atual ou último com lançamentos)
   const inferredMonth = getMonthContext().month
-  const { month, label, prev, next, isAtLatest } = useMonthNav(inferredMonth)
+  const { month, label, prev, next, isAtLatest, isAtOldest } = useMonthNav({
+    initialMonth: inferredMonth,
+    oldestAllowedMonth: oldest,
+  })
 
   const overview = getMonthlyOverview(month)
   const monthContext = getMonthContext(month)
@@ -46,7 +52,14 @@ export default function Dashboard() {
   return (
     <ScreenContainer title="Dashboard">
       <div className={styles.actions}>
-        <MonthNav label={label} onPrev={prev} onNext={next} isAtLatest={isAtLatest} />
+        <MonthNav
+          label={label}
+          onPrev={prev}
+          onNext={next}
+          isAtLatest={isAtLatest}
+          isAtOldest={isAtOldest}
+          showUpgradeHint={isAtOldest && subscription?.plan === 'free'}
+        />
         <Button size="sm" variant="outline" onClick={() => navigate('/launch')}>
           Registrar lançamento
         </Button>

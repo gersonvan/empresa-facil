@@ -21,22 +21,50 @@ export function monthLabel(month: string): string {
   return `${MONTHS_PT[Number(m) - 1]} ${year}`
 }
 
+export interface MonthNavOptions {
+  /** Mês inicial no formato "YYYY-MM". Padrão: mês atual. */
+  initialMonth?: string
+  /** Mês mais antigo permitido "YYYY-MM". undefined = sem limite. */
+  oldestAllowedMonth?: string
+}
+
 /**
- * Gerencia a navegação entre meses.
- *
- * @param initialMonth  Mês inicial no formato "YYYY-MM".
- *                      Se omitido usa o mês atual do calendário.
+ * Gerencia a navegação entre meses com suporte a limite de histórico por plano.
  */
-export function useMonthNav(initialMonth?: string) {
-  const [month, setMonth] = useState<string>(() => initialMonth ?? currentMonth())
+export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
+  const opts: MonthNavOptions =
+    typeof initialMonthOrOptions === 'string'
+      ? { initialMonth: initialMonthOrOptions }
+      : (initialMonthOrOptions ?? {})
+
+  const { initialMonth, oldestAllowedMonth } = opts
+
+  const [month, setMonth] = useState<string>(() => {
+    const start = initialMonth ?? currentMonth()
+    // Se o mês inicial estiver antes do limite, começa no limite
+    if (oldestAllowedMonth && start < oldestAllowedMonth) return oldestAllowedMonth
+    return start
+  })
 
   const now = currentMonth()
+
+  const isAtOldest = oldestAllowedMonth !== undefined && month <= oldestAllowedMonth
+
+  function prevMonth() {
+    setMonth((m) => {
+      const candidate = shiftMonth(m, -1)
+      if (oldestAllowedMonth && candidate < oldestAllowedMonth) return m
+      return candidate
+    })
+  }
 
   return {
     month,
     label: monthLabel(month),
     isAtLatest: month >= now,
-    prev: () => setMonth((m) => shiftMonth(m, -1)),
+    isAtOldest,
+    oldestAllowedMonth,
+    prev: prevMonth,
     next: () => setMonth((m) => shiftMonth(m, +1)),
     goTo: (m: string) => setMonth(m),
     reset: () => setMonth(currentMonth()),
