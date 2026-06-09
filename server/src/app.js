@@ -8,6 +8,7 @@ import { backupRoutes } from "./routes/backup.js";
 import { authRoutes } from "./routes/auth.js";
 import { membersRoutes } from "./routes/members.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
+import { adminRoutes } from "./routes/admin.js";
 
 async function buildApp({ config, eventStore, userStore, membershipStore, magicLinkStore, subscriptionStore, emailService }) {
   const app = Fastify({ logger: true });
@@ -55,6 +56,7 @@ async function buildApp({ config, eventStore, userStore, membershipStore, magicL
   await app.register(membersRoutes);
   await app.register(syncRoutes);
   await app.register(backupRoutes);
+  await app.register(adminRoutes);
 
   return app;
 }

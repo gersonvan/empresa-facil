@@ -1,0 +1,176 @@
+.backRow {
+  margin-bottom: 16px;
+}
+
+.backLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.section {
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.countBadge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1px 7px;
+  color: var(--color-text-tertiary);
+}
+
+.helper {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.errorMsg {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-negative);
+  margin: 0;
+}
+
+.successMsg {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-positive);
+  margin: 8px 0 0;
+}
+
+/* Info grid */
+
+.infoGrid {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.infoCode {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+/* Plan change */
+
+.planRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.planSelect {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Members */
+
+.memberList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  flex-wrap: wrap;
+}
+
+.memberInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.memberName {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.memberEmail {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.memberBadges {
+  display: flex;
+  gap: 5px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.role_owner      { background: var(--color-accent-soft); color: var(--color-accent); }
+.role_member     { background: var(--color-surface-soft); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.role_accountant { background: var(--color-positive-soft); color: var(--color-positive); }
+.badgePending    { background: #fff8e1; color: #b8860b; border: 1px solid #f0d060; }
+
+.memberDate {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
