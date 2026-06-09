@@ -4,6 +4,10 @@ import { loadConfig } from "./config.js";
 import { createDbPool } from "./db.js";
 import { runMigrations } from "./migrations.js";
 import { EventStore } from "./eventStore.js";
+import { UserStore } from "./userStore.js";
+import { MembershipStore } from "./membershipStore.js";
+import { MagicLinkStore } from "./magicLinkStore.js";
+import { EmailService } from "./emailService.js";
 import { buildApp } from "./app.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +28,19 @@ async function startServer() {
   }
 
   const eventStore = new EventStore({ pool });
-  const app = await buildApp({ config, eventStore });
+  const userStore = new UserStore({ pool });
+  const membershipStore = new MembershipStore({ pool });
+  const magicLinkStore = new MagicLinkStore({ pool });
+  const emailService = new EmailService({ config });
+
+  const app = await buildApp({
+    config,
+    eventStore,
+    userStore,
+    membershipStore,
+    magicLinkStore,
+    emailService,
+  });
 
   const close = async () => {
     await app.close();
