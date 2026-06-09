@@ -1,8 +1,5 @@
 import { getAuthToken } from './authStore'
-
-// ── Configuração ──────────────────────────────────────────────────────────────
-
-const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3333'
+import { API_URL } from './config'
 
 const DEVICE_ID_KEY = 'empresa-facil:sync:device-id'
 const CHECKPOINT_KEY = 'empresa-facil:sync:checkpoint'
