@@ -3,7 +3,7 @@ import { requireAuth } from '../authMiddleware.js'
 const VALID_INVITE_ROLES = ['member', 'accountant']
 
 async function membersRoutes(fastify) {
-  const { userStore, membershipStore, magicLinkStore, emailService, config } = fastify
+  const { userStore, membershipStore, magicLinkStore, emailService, subscriptionStore, config } = fastify
 
   // ── Listar membros de uma empresa ────────────────────────────────────────────
 
@@ -35,6 +35,18 @@ async function membersRoutes(fastify) {
     const inviterMembership = await membershipStore.findByUserAndCompany(request.user.userId, companyId)
     if (!inviterMembership || inviterMembership.status !== 'active') {
       return reply.code(403).send({ error: 'acesso_negado' })
+    }
+
+    // Verifica limite de membros do plano
+    const subscription = await subscriptionStore.findOrCreateFree(companyId)
+    const currentMembers = await membershipStore.listByCompany(companyId)
+    const activeMemberCount = currentMembers.filter((m) => m.status === 'active').length
+    if (!subscriptionStore.canAddMember(subscription, activeMemberCount)) {
+      return reply.code(402).send({
+        error: 'limite_de_membros',
+        plan: subscription.plan,
+        limit: subscriptionStore.getLimits(subscription).maxMembers,
+      })
     }
 
     // Se o usuário já existe e já é membro ativo, rejeitar

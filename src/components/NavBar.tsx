@@ -24,6 +24,7 @@ const navItems = [
 ]
 
 const settingsItems = [
+  { path: '/members', label: 'Equipe' },
   { path: '/companies', label: 'Empresas' },
   { path: '/tax-profile', label: 'Tributação' },
   { path: '/categories', label: 'Categorias' },

@@ -12,6 +12,7 @@ import CashFlowProjection from './screens/CashFlowProjection'
 import DeductionReview from './screens/DeductionReview'
 import Companies from './screens/Companies'
 import TaxProfileSettings from './screens/TaxProfileSettings'
+import Members from './screens/Members'
 
 export default function AppRouter() {
   return (
@@ -23,6 +24,7 @@ export default function AppRouter() {
       <Route path="/records" element={<Records />} />
       <Route path="/companies" element={<Companies />} />
       <Route path="/tax-profile" element={<TaxProfileSettings />} />
+      <Route path="/members" element={<Members />} />
       <Route path="/categories" element={<Categories />} />
       <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
       <Route path="/category-insights" element={<CategoryInsights />} />
