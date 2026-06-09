@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import styles from './NavBar.module.css'
+import { useSyncStatus } from '../hooks/useSyncStatus'
+import { isAuthenticated } from '../authStore'
+
+const SYNC_LABELS: Record<string, string> = {
+  idle: 'Sincronizado',
+  pending: 'Aguardando sync…',
+  syncing: 'Sincronizando…',
+  error: 'Falha no sync',
+  offline: 'Sem conexão',
+}
 
 const navItems = [
   { path: '/dashboard', label: 'Início' },
@@ -24,6 +34,8 @@ const settingsItems = [
 export default function NavBar() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const location = useLocation()
+  const syncStatus = useSyncStatus()
+  const showSync = isAuthenticated()
 
   const isSettingsRouteActive = useMemo(
     () => settingsItems.some(({ path }) => location.pathname.startsWith(path)),
@@ -64,6 +76,17 @@ export default function NavBar() {
       >
         Configurações
       </button>
+
+      {showSync ? (
+        <div
+          className={`${styles.syncIndicator} ${styles[`sync_${syncStatus}`]}`}
+          title={SYNC_LABELS[syncStatus]}
+          aria-label={SYNC_LABELS[syncStatus]}
+        >
+          <span className={styles.syncDot} aria-hidden="true" />
+          <span className={styles.syncLabel}>{SYNC_LABELS[syncStatus]}</span>
+        </div>
+      ) : null}
 
       {shouldShowSettings ? (
         <div id="settings-submenu" className={styles.settingsPanel}>

@@ -94,6 +94,33 @@
   background-color: var(--color-accent-soft);
 }
 
+/* Sync indicator */
+.syncIndicator {
+  display: none; /* hidden on mobile — no espaço */
+}
+
+.syncDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.syncLabel {
+  font-size: 11px;
+}
+
+.sync_idle .syncDot    { background: #22c55e; }
+.sync_pending .syncDot { background: #f59e0b; }
+.sync_syncing .syncDot { background: #3b82f6; animation: syncPulse 1s infinite; }
+.sync_error .syncDot   { background: #ef4444; }
+.sync_offline .syncDot { background: #9ca3af; }
+
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
 /* Desktop: fixed left sidebar */
 @media (min-width: 768px) {
   .nav {
@@ -186,6 +213,16 @@
     font-size: 13px;
     color: var(--color-sidebar-text);
     background: transparent;
+  }
+
+  .syncIndicator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    margin-top: auto;
+    color: var(--color-sidebar-text);
+    opacity: 0.6;
   }
 
   .navItem:hover {
