@@ -7,6 +7,7 @@ import { EventStore } from "./eventStore.js";
 import { UserStore } from "./userStore.js";
 import { MembershipStore } from "./membershipStore.js";
 import { MagicLinkStore } from "./magicLinkStore.js";
+import { SubscriptionStore } from "./subscriptionStore.js";
 import { EmailService } from "./emailService.js";
 import { buildApp } from "./app.js";
 
@@ -31,6 +32,7 @@ async function startServer() {
   const userStore = new UserStore({ pool });
   const membershipStore = new MembershipStore({ pool });
   const magicLinkStore = new MagicLinkStore({ pool });
+  const subscriptionStore = new SubscriptionStore({ pool });
   const emailService = new EmailService({ config });
 
   const app = await buildApp({
@@ -39,6 +41,7 @@ async function startServer() {
     userStore,
     membershipStore,
     magicLinkStore,
+    subscriptionStore,
     emailService,
   });
 

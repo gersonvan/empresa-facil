@@ -1,3 +1,5 @@
+import { requireAuth } from '../authMiddleware.js'
+
 function schemaValidationError(message) {
   const error = new Error(message);
   error.statusCode = 400;
@@ -25,10 +27,13 @@ function normalizePushBody(body) {
 }
 
 async function syncRoutes(fastify) {
-  fastify.post("/api/sync/push", async (request, reply) => {
+  fastify.post("/api/sync/push", { preHandler: requireAuth }, async (request, reply) => {
     try {
       const payload = normalizePushBody(request.body);
-      const result = await fastify.eventStore.appendEventsBatch(payload);
+      const result = await fastify.eventStore.appendEventsBatch({
+        ...payload,
+        userId: request.user.userId,
+      });
       return result;
     } catch (error) {
       reply.code(error.statusCode || 400);
@@ -39,7 +44,7 @@ async function syncRoutes(fastify) {
     }
   });
 
-  fastify.get("/api/sync/pull", async (request, reply) => {
+  fastify.get("/api/sync/pull", { preHandler: requireAuth }, async (request, reply) => {
     const query = request.query || {};
     const deviceId =
       typeof query.deviceId === "string" && query.deviceId.trim().length > 0
@@ -62,6 +67,7 @@ async function syncRoutes(fastify) {
     const result = await fastify.eventStore.pullEventsSince({
       since,
       deviceId,
+      userId: request.user.userId,
       limit,
     });
 

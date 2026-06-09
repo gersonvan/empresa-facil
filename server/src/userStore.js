@@ -7,7 +7,7 @@ class UserStore {
 
   async findById(id) {
     const result = await this.pool.query(
-      'SELECT id, email, name, avatar_url, created_at FROM users WHERE id = $1',
+      'SELECT id, email, name, avatar_url, is_admin, created_at FROM users WHERE id = $1',
       [id]
     )
     return result.rows[0] ?? null

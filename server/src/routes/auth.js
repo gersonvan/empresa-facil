@@ -117,7 +117,17 @@ async function authRoutes(fastify) {
       return reply.code(404).send({ error: 'usuario_nao_encontrado' })
     }
     const memberships = await membershipStore.listByUser(request.user.userId)
-    return { user, memberships }
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatar_url,
+        isAdmin: user.is_admin ?? false,
+        createdAt: user.created_at,
+      },
+      memberships,
+    }
   })
 }
 

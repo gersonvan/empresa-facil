@@ -9,7 +9,7 @@ import { authRoutes } from "./routes/auth.js";
 import { membersRoutes } from "./routes/members.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 
-async function buildApp({ config, eventStore, userStore, membershipStore, magicLinkStore, emailService }) {
+async function buildApp({ config, eventStore, userStore, membershipStore, magicLinkStore, subscriptionStore, emailService }) {
   const app = Fastify({ logger: true });
 
   app.decorate("config", config);
@@ -17,6 +17,7 @@ async function buildApp({ config, eventStore, userStore, membershipStore, magicL
   app.decorate("userStore", userStore);
   app.decorate("membershipStore", membershipStore);
   app.decorate("magicLinkStore", magicLinkStore);
+  app.decorate("subscriptionStore", subscriptionStore);
   app.decorate("emailService", emailService);
 
   await app.register(cors, { origin: true });

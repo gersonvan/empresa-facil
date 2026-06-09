@@ -142,13 +142,18 @@ class EventStore {
     await client.query(query, [deviceId, checkpoint, lastEventId]);
   }
 
-  async appendEventsBatch({ deviceId, events, since = 0 }) {
+  async appendEventsBatch({ deviceId, userId, events, since = 0 }) {
     assertNonEmptyString(deviceId, "deviceId");
     if (!Array.isArray(events)) {
       throw new Error("events must be an array.");
     }
 
-    const normalizedEvents = events.map((event) => validateEventPayload(event, deviceId));
+    const normalizedEvents = events.map((event) => {
+      const validated = validateEventPayload(event, deviceId)
+      // userId vem do JWT — nunca confia no que o cliente envia
+      if (userId) validated.userId = userId
+      return validated
+    });
     const accepted = [];
     const conflicts = [];
 
@@ -256,12 +261,20 @@ class EventStore {
     }
   }
 
-  async pullEventsSince({ since = 0, deviceId, limit = 500 }) {
+  async pullEventsSince({ since = 0, deviceId, userId, limit = 500 }) {
     const normalizedSince = Number.isFinite(Number(since)) ? Number(since) : 0;
     const normalizedLimit = Math.max(1, Math.min(1000, Number(limit) || 500));
 
     const client = await this.pool.connect();
     try {
+      // Se userId fornecido, filtra eventos do usuário — isolamento multi-tenant
+      const params = userId
+        ? [normalizedSince, userId, normalizedLimit + 1]
+        : [normalizedSince, normalizedLimit + 1];
+
+      const userFilter = userId ? 'AND user_id = $2' : '';
+      const limitParam = userId ? '$3' : '$2';
+
       const rowsResult = await client.query(
         `
           SELECT
@@ -277,11 +290,11 @@ class EventStore {
             user_id,
             synced_at_ms
           FROM audit_events
-          WHERE synced_at_ms > $1
+          WHERE synced_at_ms > $1 ${userFilter}
           ORDER BY synced_at_ms ASC, id ASC
-          LIMIT $2
+          LIMIT ${limitParam}
         `,
-        [normalizedSince, normalizedLimit + 1]
+        params
       );
 
       const hasMore = rowsResult.rows.length > normalizedLimit;

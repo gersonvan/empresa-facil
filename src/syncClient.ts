@@ -288,17 +288,22 @@ class SyncClient {
     // Flush on window focus (catch up on queued events)
     window.addEventListener('focus', () => this.flush())
 
-    // Flush before unload (best-effort)
+    // Flush before unload (best-effort via keepalive fetch — suporta Authorization header)
     window.addEventListener('beforeunload', () => {
       const queue = this.readQueue()
       if (queue.length === 0) return
       const token = getAuthToken()
       if (!token) return
       const checkpoint = readStorage<number>(CHECKPOINT_KEY, 0)
-      navigator.sendBeacon(
-        `${API_URL}/api/sync/push`,
-        JSON.stringify({ deviceId: this.deviceId, since: checkpoint, events: queue })
-      )
+      fetch(`${API_URL}/api/sync/push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ deviceId: this.deviceId, since: checkpoint, events: queue }),
+        keepalive: true,
+      }).catch(() => { /* best-effort */ })
     })
 
     // Periodic pull

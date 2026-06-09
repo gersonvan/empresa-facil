@@ -1,7 +1,7 @@
 import { requireAuth } from '../authMiddleware.js'
 
 async function onboardingRoutes(fastify) {
-  const { membershipStore } = fastify
+  const { membershipStore, subscriptionStore } = fastify
 
   // Retorna se o usuário ainda precisa passar pelo onboarding
   fastify.get('/api/onboarding/status', { preHandler: requireAuth }, async (request) => {
@@ -45,6 +45,9 @@ async function onboardingRoutes(fastify) {
         role: 'owner',
         status: 'active',
       })
+
+      // Garante que a empresa tem uma assinatura (free por padrão)
+      await subscriptionStore.findOrCreateFree(companyId.trim())
 
       claimed.push(companyId)
     }
