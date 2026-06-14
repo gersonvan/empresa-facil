@@ -34,7 +34,7 @@ steps:
   - name: 'node:20-alpine'
     id: frontend-install
     entrypoint: npm
-    args: [ci]
+    args: [install]
 
   # ── Frontend: build ───────────────────────────────────────────────────────────
   - name: 'node:20-alpine'
