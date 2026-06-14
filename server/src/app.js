@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwtPlugin from "@fastify/jwt";
 import oauthPlugin from "@fastify/oauth2";
+import rateLimit from "@fastify/rate-limit";
 import { healthRoutes } from "./routes/health.js";
 import { syncRoutes } from "./routes/sync.js";
 import { backupRoutes } from "./routes/backup.js";
@@ -25,6 +26,7 @@ async function buildApp({ config, pool, eventStore, userStore, membershipStore, 
 
   await app.register(cors, { origin: true });
   await app.register(jwtPlugin, { secret: config.jwtSecret });
+  await app.register(rateLimit, { global: false });
 
   if (config.googleClientId) {
     await app.register(oauthPlugin, {
@@ -60,6 +62,19 @@ async function buildApp({ config, pool, eventStore, userStore, membershipStore, 
   await app.register(backupRoutes);
   await app.register(adminRoutes);
   await app.register(billingRoutes);
+
+  app.setErrorHandler((error, request, reply) => {
+    const status = error.statusCode ?? 500
+    if (status >= 500) {
+      app.log.error({
+        err: error,
+        'logging.googleapis.com/severity': 'ERROR',
+        message: error.message,
+        stack: error.stack,
+      }, 'Unhandled server error')
+    }
+    reply.code(status).send({ error: error.message ?? 'internal_error' })
+  })
 
   return app;
 }

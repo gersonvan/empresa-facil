@@ -1,0 +1,63 @@
+steps:
+  # ── Backend: build Docker image ───────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: backend-build
+    args:
+      - build
+      - -t
+      - southamerica-east1-docker.pkg.dev/x-object-496819-e3/cloud-run-source-deploy/empresafacil-api:$COMMIT_SHA
+      - ./server
+
+  # ── Backend: push to Artifact Registry ───────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: backend-push
+    waitFor: [backend-build]
+    args:
+      - push
+      - southamerica-east1-docker.pkg.dev/x-object-496819-e3/cloud-run-source-deploy/empresafacil-api:$COMMIT_SHA
+
+  # ── Backend: deploy to Cloud Run ─────────────────────────────────────────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: backend-deploy
+    waitFor: [backend-push]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - empresafacil-api
+      - --image=southamerica-east1-docker.pkg.dev/x-object-496819-e3/cloud-run-source-deploy/empresafacil-api:$COMMIT_SHA
+      - --region=southamerica-east1
+      - --project=x-object-496819-e3
+      - --quiet
+
+  # ── Frontend: install dependencies ───────────────────────────────────────────
+  - name: 'node:20-alpine'
+    id: frontend-install
+    entrypoint: npm
+    args: [ci]
+
+  # ── Frontend: build ───────────────────────────────────────────────────────────
+  - name: 'node:20-alpine'
+    id: frontend-build
+    waitFor: [frontend-install]
+    entrypoint: npm
+    args: [run, build]
+    env:
+      - VITE_API_URL=https://empresafacil-api-586027028292.southamerica-east1.run.app
+
+  # ── Frontend: deploy to GCS ───────────────────────────────────────────────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: frontend-deploy
+    waitFor: [frontend-build]
+    entrypoint: gsutil
+    args:
+      - -m
+      - rsync
+      - -r
+      - -d
+      - dist/
+      - gs://empresafacil.gersonvan.com.br
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_MEDIUM

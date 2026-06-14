@@ -9,11 +9,15 @@ import Onboarding from './screens/Onboarding'
 import AdminDashboard from './screens/AdminDashboard'
 import AdminCompany from './screens/AdminCompany'
 import AdminUsers from './screens/AdminUsers'
+import Privacy from './screens/Privacy'
+import Terms from './screens/Terms'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/privacidade" element={<Privacy />} />
+      <Route path="/termos" element={<Terms />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
 

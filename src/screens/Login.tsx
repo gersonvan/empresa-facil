@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { API_URL } from '../config'
 import styles from './Login.module.css'
 
@@ -118,6 +119,11 @@ export default function Login() {
             </button>
           </form>
         )}
+        <p className={styles.legalLinks}>
+          Ao entrar, você concorda com os{' '}
+          <Link to="/termos">Termos de Uso</Link> e a{' '}
+          <Link to="/privacidade">Política de Privacidade</Link>.
+        </p>
       </div>
     </div>
   )

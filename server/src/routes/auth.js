@@ -61,7 +61,9 @@ async function authRoutes(fastify) {
 
   // ── Magic link: solicitar ────────────────────────────────────────────────────
 
-  fastify.post('/auth/magic-link/request', async (request, reply) => {
+  fastify.post('/auth/magic-link/request', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute', keyGenerator: (req) => req.body?.email ?? req.ip } },
+  }, async (request, reply) => {
     const { email } = request.body ?? {}
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return reply.code(400).send({ error: 'email_invalido' })

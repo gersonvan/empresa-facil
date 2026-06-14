@@ -213,3 +213,20 @@
   padding: 0;
   text-decoration: underline;
 }
+
+.legalLinks {
+  margin: 20px 0 0;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.legalLinks a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+}
+
+.legalLinks a:hover {
+  color: var(--color-accent);
+}
