@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button, Input } from '../components/ui'
 import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { formatCurrency, getMonthContext } from './financialOverview'
 import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, toggleReviewFlag, updateLaunchEntry } from '../launchStore'
+import { getAttachment, hasAttachment, removeAttachment, saveAttachment } from '../attachmentStore'
 import { monthLifecycleStore } from '../monthLifecycle'
 import styles from './Records.module.css'
 
@@ -77,6 +78,9 @@ export default function Records() {
   const [onlyFlagged, setOnlyFlagged] = useState(false)
   const [message, setMessage] = useState('')
   const [, forceUpdate] = useState(0)
+  const [attachmentError, setAttachmentError] = useState('')
+  const [viewingAttachment, setViewingAttachment] = useState<string | null>(null)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // Todas as categorias para o filtro (sem restrição de tipo/natureza)
   const allCategories = useMemo(() => listCategories(), [])
@@ -151,6 +155,32 @@ export default function Records() {
 
   function handleToggleFlag(entryId: string) {
     toggleReviewFlag(entryId)
+    forceUpdate((n) => n + 1)
+  }
+
+  function handleAttachFile(entryId: string, file: File) {
+    setAttachmentError('')
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = saveAttachment({
+        entryId,
+        name: file.name,
+        type: file.type,
+        data: reader.result as string,
+        size: file.size,
+        savedAt: new Date().toISOString(),
+      })
+      if (!result.ok) {
+        setAttachmentError(result.error)
+      } else {
+        forceUpdate((n) => n + 1)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function handleRemoveAttachment(entryId: string) {
+    removeAttachment(entryId)
     forceUpdate((n) => n + 1)
   }
 
@@ -510,45 +540,81 @@ export default function Records() {
           </div>
         ) : null}
 
+        {attachmentError && <p className={styles.message} style={{ color: 'var(--color-negative)' }}>{attachmentError}</p>}
         {entries.length === 0 ? (
           <p className={styles.emptyState}>Nenhum lançamento encontrado para os filtros atuais.</p>
         ) : (
           <ul className={styles.list}>
-            {entries.map((entry) => (
-              <li key={entry.id} className={`${styles.row} ${entry.flaggedForReview ? styles.rowFlagged : ''}`}>
-                <div className={styles.rowInfo}>
-                  <p className={styles.rowTitle}>
-                    {entry.description}
-                    {entry.flaggedForReview && <span className={styles.flaggedBadge}>Para revisar</span>}
-                  </p>
-                  <p className={styles.rowMeta}>
-                    {costTypeLabel(entry.costType)} · {dreGroupLabel(entry.dreGroup)} · {entry.categoryName} · {entry.month}
-                  </p>
-                </div>
-                <div className={styles.rowTail}>
-                  <strong className={styles.rowAmount}>{formatCurrency(entry.amount)}</strong>
-                  <div className={styles.rowActions}>
-                    <button
-                      type="button"
-                      className={`${styles.flagBtn} ${entry.flaggedForReview ? styles.flagActive : ''}`}
-                      onClick={() => handleToggleFlag(entry.id)}
-                      title={entry.flaggedForReview ? 'Remover marcação de revisão' : 'Marcar para revisão'}
-                      aria-label={entry.flaggedForReview ? 'Remover marcação de revisão' : 'Marcar para revisão'}
-                    >
-                      🚩
-                    </button>
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(entry.id)} disabled={!canMutateEntry(entry.month)}>
-                      Editar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => removeEntry(entry.id)} disabled={!canMutateEntry(entry.month)}>
-                      Remover
-                    </Button>
+            {entries.map((entry) => {
+              const attached = hasAttachment(entry.id)
+              return (
+                <li key={entry.id} className={`${styles.row} ${entry.flaggedForReview ? styles.rowFlagged : ''}`}>
+                  <div className={styles.rowInfo}>
+                    <p className={styles.rowTitle}>
+                      {entry.description}
+                      {entry.flaggedForReview && <span className={styles.flaggedBadge}>Para revisar</span>}
+                      {attached && <span className={styles.attachBadge}>📎</span>}
+                    </p>
+                    <p className={styles.rowMeta}>
+                      {costTypeLabel(entry.costType)} · {dreGroupLabel(entry.dreGroup)} · {entry.categoryName} · {entry.month}
+                    </p>
                   </div>
-                </div>
-              </li>
-            ))}
+                  <div className={styles.rowTail}>
+                    <strong className={styles.rowAmount}>{formatCurrency(entry.amount)}</strong>
+                    <div className={styles.rowActions}>
+                      <button
+                        type="button"
+                        className={`${styles.flagBtn} ${entry.flaggedForReview ? styles.flagActive : ''}`}
+                        onClick={() => handleToggleFlag(entry.id)}
+                        title={entry.flaggedForReview ? 'Remover revisão' : 'Marcar para revisão'}
+                      >🚩</button>
+                      {attached ? (
+                        <>
+                          <button type="button" className={styles.attachBtn} onClick={() => setViewingAttachment(entry.id)} title="Ver comprovante">📎 Ver</button>
+                          <button type="button" className={styles.attachRemoveBtn} onClick={() => handleRemoveAttachment(entry.id)} title="Remover comprovante">✕</button>
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            style={{ display: 'none' }}
+                            ref={(el) => { fileInputRefs.current[entry.id] = el }}
+                            onChange={(e) => { if (e.target.files?.[0]) handleAttachFile(entry.id, e.target.files[0]); e.target.value = '' }}
+                          />
+                          <button type="button" className={styles.attachBtn} onClick={() => fileInputRefs.current[entry.id]?.click()} title="Anexar comprovante">📎</button>
+                        </>
+                      )}
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(entry.id)} disabled={!canMutateEntry(entry.month)}>Editar</Button>
+                      <Button size="sm" variant="outline" onClick={() => removeEntry(entry.id)} disabled={!canMutateEntry(entry.month)}>Remover</Button>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
+
+        {viewingAttachment && (() => {
+          const att = getAttachment(viewingAttachment)
+          if (!att) return null
+          return (
+            <div className={styles.attachModal} onClick={() => setViewingAttachment(null)}>
+              <div className={styles.attachModalInner} onClick={(e) => e.stopPropagation()}>
+                <div className={styles.attachModalHeader}>
+                  <span className={styles.attachModalName}>{att.name}</span>
+                  <button type="button" className={styles.attachModalClose} onClick={() => setViewingAttachment(null)}>✕ Fechar</button>
+                </div>
+                {att.type.startsWith('image/') ? (
+                  <img src={att.data} alt={att.name} className={styles.attachPreview} />
+                ) : (
+                  <iframe src={att.data} title={att.name} className={styles.attachPreview} />
+                )}
+                <a href={att.data} download={att.name} className={styles.attachDownload}>Baixar arquivo</a>
+              </div>
+            </div>
+          )
+        })()}
       </Card>
     </ScreenContainer>
   )

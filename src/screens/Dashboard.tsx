@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import MonthNav from '../components/MonthNav'
 import { useNavigate } from 'react-router-dom'
 import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
-import { listLaunchEntries } from '../launchStore'
+import { listLaunchEntries, saveLaunchEntry } from '../launchStore'
+import { listRecurringTemplates, removeRecurringTemplate } from '../recurringStore'
 import { useMonthNav } from '../hooks/useMonthNav'
 import { useSubscription, oldestAllowedMonth } from '../hooks/useSubscription'
 import styles from './Dashboard.module.css'
@@ -33,6 +35,33 @@ export default function Dashboard() {
       accumulator.set(entry.categoryName, current + entry.amount)
       return accumulator
     }, new Map())
+
+  const [recurringApplied, setRecurringApplied] = useState(false)
+
+  const pendingRecurring = listRecurringTemplates({ companyId: monthContext.companyId }).filter((t) => {
+    const existingDescs = listLaunchEntries({ companyId: t.companyId, month, costType: t.costType })
+      .map((e) => e.description)
+    return !existingDescs.includes(t.description)
+  })
+
+  function applyRecurring() {
+    const now = new Date().toISOString()
+    for (const t of pendingRecurring) {
+      saveLaunchEntry({
+        id: `rec-apply-${t.id}-${month}-${Date.now()}`,
+        companyId: t.companyId,
+        month,
+        costType: t.costType,
+        dreGroup: t.dreGroup,
+        categoryId: t.categoryId,
+        categoryName: t.categoryName,
+        description: t.description,
+        amount: t.amount,
+        createdAt: now,
+      })
+    }
+    setRecurringApplied(true)
+  }
 
   const topCategoryRows = Array.from(topCategoryExpenses.entries())
     .map(([categoryName, amount]) => ({ categoryName, amount }))
@@ -84,6 +113,24 @@ export default function Dashboard() {
         </div>
         <span className={`${styles.healthBadge} ${styles[health.tone]}`}>{health.badge}</span>
       </Card>
+
+      {pendingRecurring.length > 0 && !recurringApplied && (
+        <Card className={styles.recurringCard}>
+          <div className={styles.recurringBody}>
+            <p className={styles.recurringTitle}>🔁 {pendingRecurring.length} lançamento{pendingRecurring.length > 1 ? 's' : ''} recorrente{pendingRecurring.length > 1 ? 's' : ''} pendente{pendingRecurring.length > 1 ? 's' : ''}</p>
+            <ul className={styles.recurringList}>
+              {pendingRecurring.map((t) => (
+                <li key={t.id}>
+                  <span>{t.description}</span>
+                  <span>{formatCurrency(t.amount)}</span>
+                  <button type="button" className={styles.recurringRemoveBtn} onClick={() => removeRecurringTemplate(t.id)} title="Remover recorrente">✕</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Button size="sm" onClick={applyRecurring}>Aplicar ao mês de {label}</Button>
+        </Card>
+      )}
 
       <Card className={styles.nextStepCard} padding="compact">
         <div className={styles.nextStepHeader}>

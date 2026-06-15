@@ -131,6 +131,60 @@
 .healthBadge.yellow { background: color-mix(in srgb, #f59e0b 14%, transparent); color: #b45309; }
 .healthBadge.red    { background: color-mix(in srgb, var(--color-negative) 14%, transparent); color: var(--color-negative); }
 
+/* Recurring card */
+.recurringCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  border-color: #a78bfa;
+  background: color-mix(in srgb, #a78bfa 6%, var(--color-surface));
+  flex-wrap: wrap;
+}
+
+.recurringBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.recurringTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6d28d9;
+  margin: 0 0 8px;
+}
+
+.recurringList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.recurringList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.recurringList li span:first-child { flex: 1; }
+.recurringList li span:last-of-type { font-weight: 700; color: var(--color-text-primary); }
+
+.recurringRemoveBtn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  line-height: 1;
+}
+.recurringRemoveBtn:hover { color: var(--color-negative); }
+
 .categoryCard {
   display: grid;
   gap: 10px;

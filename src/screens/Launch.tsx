@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ScreenContainer from '../components/ScreenContainer'
 import { createLaunchEntry } from '../domain'
 import { toIngestionRecord } from '../contracts'
 import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { monthLifecycleStore } from '../monthLifecycle'
-import { saveLaunchEntry } from '../launchStore'
+import { listLaunchEntries, saveLaunchEntry } from '../launchStore'
+import { saveRecurringTemplate } from '../recurringStore'
 import { Button, Card, Input } from '../components/ui'
 import { getMonthContext } from './financialOverview'
 import styles from './Launch.module.css'
@@ -17,6 +18,7 @@ interface LaunchFormState {
   description: string
   amount: string
   notes: string
+  recurring: boolean
 }
 
 interface ValidationErrors {
@@ -80,22 +82,31 @@ export default function Launch() {
     description: '',
     amount: '',
     notes: '',
+    recurring: false,
   })
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [savedEntryId, setSavedEntryId] = useState<string | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const descriptionRef = useRef<HTMLDivElement>(null)
 
   const monthContext = getMonthContext()
   const currentMonth = useMemo(() => monthFromNow(), [])
 
   const availableCategories = useMemo(
-    () =>
-      listCategories({
-        costType: form.costType,
-        dreGroup: form.dreGroup,
-      }),
+    () => listCategories({ costType: form.costType, dreGroup: form.dreGroup }),
     [form.costType, form.dreGroup]
   )
+
+  const descriptionSuggestions = useMemo(() => {
+    const q = form.description.trim().toLowerCase()
+    if (q.length < 2) return []
+    const seen = new Set<string>()
+    return listLaunchEntries({ companyId: monthContext.companyId, costType: form.costType, dreGroup: form.dreGroup })
+      .filter((e) => e.description.toLowerCase().includes(q))
+      .filter((e) => { if (seen.has(e.description)) return false; seen.add(e.description); return true })
+      .slice(0, 5)
+  }, [form.description, form.costType, form.dreGroup, monthContext.companyId])
 
   function validate(nextState: LaunchFormState) {
     const validationErrors: ValidationErrors = {}
@@ -136,8 +147,9 @@ export default function Launch() {
       return
     }
 
+    const entryId = nextEntryId()
     const entry = createLaunchEntry({
-      id: nextEntryId(),
+      id: entryId,
       companyId: monthContext.companyId,
       month: currentMonth,
       costType: form.costType,
@@ -154,8 +166,24 @@ export default function Launch() {
       categoryName: selectedCategory.name,
       createdAt: new Date().toISOString(),
     })
+
+    if (form.recurring) {
+      saveRecurringTemplate({
+        id: `rec-${entryId}`,
+        companyId: monthContext.companyId,
+        costType: form.costType,
+        dreGroup: form.dreGroup,
+        categoryId: selectedCategory.id,
+        categoryName: selectedCategory.name,
+        description: form.description,
+        amount: parseBrazilianAmount(form.amount),
+        createdAt: new Date().toISOString(),
+      })
+    }
+
     setSavedEntryId(String(ingestionRecord.source_id))
     setStatusMessage('')
+    setShowSuggestions(false)
 
     setForm((prevState) => ({
       ...prevState,
@@ -163,6 +191,7 @@ export default function Launch() {
       description: '',
       amount: '',
       notes: '',
+      recurring: false,
     }))
   }
 
@@ -257,20 +286,51 @@ export default function Launch() {
                 {errors.categoryId ? <span className={styles.selectErrorText}>{errors.categoryId}</span> : null}
               </label>
 
-              <Input
-                label="Descrição"
-                placeholder={
-                  form.dreGroup === 'revenue'
-                    ? 'Ex.: venda balcão'
-                    : form.dreGroup === 'deductions'
-                      ? 'Ex.: desconto incondicional concedido'
-                      : 'Ex.: aluguel do escritório'
-                }
-                helperText="Use um nome curto e direto."
-                value={form.description}
-                onChange={(event) => setForm((prevState) => ({ ...prevState, description: event.target.value }))}
-                errorText={errors.description}
-              />
+              <div className={styles.descriptionWrapper} ref={descriptionRef}>
+                <Input
+                  label="Descrição"
+                  placeholder={
+                    form.dreGroup === 'revenue'
+                      ? 'Ex.: venda balcão'
+                      : form.dreGroup === 'deductions'
+                        ? 'Ex.: desconto incondicional concedido'
+                        : 'Ex.: aluguel do escritório'
+                  }
+                  helperText="Use um nome curto e direto."
+                  value={form.description}
+                  onChange={(event) => {
+                    setForm((prevState) => ({ ...prevState, description: event.target.value }))
+                    setShowSuggestions(true)
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  errorText={errors.description}
+                />
+                {showSuggestions && descriptionSuggestions.length > 0 && (
+                  <ul className={styles.suggestions} role="listbox">
+                    {descriptionSuggestions.map((s) => (
+                      <li
+                        key={s.id}
+                        className={styles.suggestionItem}
+                        role="option"
+                        aria-selected={false}
+                        onMouseDown={() => {
+                          setForm((prev) => ({
+                            ...prev,
+                            description: s.description,
+                            categoryId: s.categoryId,
+                            amount: s.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                          }))
+                          setShowSuggestions(false)
+                        }}
+                      >
+                        <span className={styles.suggestionDesc}>{s.description}</span>
+                        <span className={styles.suggestionMeta}>{s.categoryName}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <Input
                 label="Valor"
                 inputMode="decimal"
@@ -293,6 +353,17 @@ export default function Launch() {
                     value={form.notes}
                     onChange={(event) => setForm((prevState) => ({ ...prevState, notes: event.target.value }))}
                   />
+                  <label className={styles.recurringToggle}>
+                    <input
+                      type="checkbox"
+                      checked={form.recurring}
+                      onChange={(e) => setForm((prev) => ({ ...prev, recurring: e.target.checked }))}
+                    />
+                    <span>
+                      <strong>Repetir mensalmente</strong>
+                      <span className={styles.recurringHint}> — será sugerido todo mês no Dashboard</span>
+                    </span>
+                  </label>
                 </div>
               </details>
             </div>
