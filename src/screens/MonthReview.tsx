@@ -27,6 +27,7 @@ export default function MonthReview() {
   const { month: selectedMonth, label: monthLabel, prev, next, isAtLatest, isAtOldest } = useMonthNav({
     initialMonth: getMonthContext().month,
     oldestAllowedMonth: oldest,
+    sync: true,
   })
   const month = getMonthContext(selectedMonth)
   const overview = getMonthlyOverview(selectedMonth)
@@ -44,6 +45,20 @@ export default function MonthReview() {
     setMessage('')
     setActualDeductionsInput('')
   }, [month.companyId, month.month])
+
+  const allEntries = useMemo(
+    () => listLaunchEntries({ companyId: month.companyId, month: month.month, costType: 'all' }),
+    [month.companyId, month.month]
+  )
+  const flaggedCount = allEntries.filter((e) => e.flaggedForReview).length
+  const hasRevenue = overview.summary.revenue > 0
+  const hasExpenses = overview.summary.expenses > 0
+
+  const checklist = [
+    { label: 'Receitas lançadas no mês', done: hasRevenue, hint: hasRevenue ? null : 'Nenhuma receita registrada ainda.' },
+    { label: 'Despesas registradas', done: hasExpenses, hint: hasExpenses ? null : 'Nenhuma despesa registrada ainda.' },
+    { label: 'Lançamentos para revisar', done: flaggedCount === 0, hint: flaggedCount > 0 ? `${flaggedCount} lançamento${flaggedCount > 1 ? 's' : ''} marcado${flaggedCount > 1 ? 's' : ''} para revisão.` : null },
+  ]
 
   const nextActions = useMemo(() => {
     if (status === 'open') {
@@ -314,14 +329,19 @@ export default function MonthReview() {
         <Card>
           <h2 className={styles.sectionTitle}>Checklist rápido</h2>
           <ul className={styles.checklist}>
-            <li>Lançamentos do mês conferidos</li>
-            <li>DRE revisado com indicadores</li>
-            <li>Aviso de validação contábil registrado</li>
+            {checklist.map((item) => (
+              <li key={item.label} className={item.done ? styles.checkDone : styles.checkPending}>
+                <span className={styles.checkIcon} aria-hidden="true">{item.done ? '✓' : '○'}</span>
+                <span>
+                  {item.label}
+                  {item.hint && <span className={styles.checkHint}> — {item.hint}</span>}
+                </span>
+              </li>
+            ))}
           </ul>
-          <p className={styles.meta}>Regra fiscal: {overview.summary.taxRuleVersion}</p>
-          <p className={styles.meta}>Rastreio: {overview.summary.taxDerivationFingerprint}</p>
-          <p className={styles.meta}>Contexto do ciclo: {overview.taxSupport.audit.lifecycleSnapshot?.status ?? 'sem contexto'}</p>
-          <p className={styles.warning}>{overview.summary.accountantValidationWarning}</p>
+          {overview.summary.accountantValidationWarning && (
+            <p className={styles.warning}>{overview.summary.accountantValidationWarning}</p>
+          )}
         </Card>
 
         <Card>

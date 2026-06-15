@@ -14,7 +14,6 @@ export default function ScreenContainer({ title, children }: ScreenContainerProp
       <header className={styles.header}>
         <div className={styles.headingGroup}>
           <h1 className={styles.title}>{title}</h1>
-          <p className={styles.subtitle}>Interface alinhada aos tokens do sistema.</p>
         </div>
         <div className={styles.headerControls}>
           <CompanySwitcher />

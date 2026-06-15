@@ -200,6 +200,7 @@ export default function Launch() {
       ...prevState,
       costType: nextCostType,
       categoryId: '',
+      dreGroup: nextCostType === 'personal' && prevState.dreGroup === 'deductions' ? 'expenses' : prevState.dreGroup,
     }))
   }
 
@@ -250,14 +251,16 @@ export default function Launch() {
                 >
                   Receita
                 </button>
-                <button
-                  type="button"
-                  className={`${styles.intentButton} ${form.dreGroup === 'deductions' ? styles.intentActive : ''}`}
-                  onClick={() => updateDreGroup('deductions')}
-                  aria-pressed={form.dreGroup === 'deductions'}
-                >
-                  Dedução
-                </button>
+                {form.costType === 'company' && (
+                  <button
+                    type="button"
+                    className={`${styles.intentButton} ${form.dreGroup === 'deductions' ? styles.intentActive : ''}`}
+                    onClick={() => updateDreGroup('deductions')}
+                    aria-pressed={form.dreGroup === 'deductions'}
+                  >
+                    Abatimento fiscal
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`${styles.intentButton} ${form.dreGroup === 'expenses' ? styles.intentActive : ''}`}

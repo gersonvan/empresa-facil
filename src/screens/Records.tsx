@@ -3,13 +3,36 @@ import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button, Input } from '../components/ui'
 import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { formatCurrency, getMonthContext } from './financialOverview'
+import { useSearchParams } from 'react-router-dom'
 import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, toggleReviewFlag, updateLaunchEntry } from '../launchStore'
 import { getAttachment, hasAttachment, removeAttachment, saveAttachment } from '../attachmentStore'
 import { monthLifecycleStore } from '../monthLifecycle'
+import { saveCommitment, type CommitmentCostType, type CommitmentType } from '../commitmentStore'
 import styles from './Records.module.css'
 
 type CostTypeFilter = 'all' | 'company' | 'personal'
 type DreGroupFilter = 'all' | DreGroup
+
+const INSTALLMENT_REGEX = /\((\d+)\/(\d+)\)/
+
+function detectInstallment(description: string): { current: number; total: number } | null {
+  const match = description.match(INSTALLMENT_REGEX)
+  if (!match) return null
+  return { current: Number(match[1]), total: Number(match[2]) }
+}
+
+interface CommitmentModalState {
+  entryId: string
+  description: string
+  amount: number
+  costType: CommitmentCostType
+  startMonth: string
+  type: CommitmentType
+  endMonth: string
+  totalInstallments: string
+  currentInstallment: string
+  error: string
+}
 
 interface EditState {
   entryId: string
@@ -69,10 +92,11 @@ function formatAmountForInput(value: number) {
 
 export default function Records() {
   const monthContext = getMonthContext()
-  const [monthFilter, setMonthFilter] = useState(monthFromNow())
+  const [searchParams] = useSearchParams()
+  const [monthFilter, setMonthFilter] = useState(() => searchParams.get('mes') ?? monthFromNow())
   const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>('all')
   const [dreGroupFilter, setDreGroupFilter] = useState<DreGroupFilter>('all')
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get('categoria') ?? '')
   const [searchText, setSearchText] = useState('')
   const [editState, setEditState] = useState<EditState | null>(null)
   const [onlyFlagged, setOnlyFlagged] = useState(false)
@@ -80,6 +104,9 @@ export default function Records() {
   const [, forceUpdate] = useState(0)
   const [attachmentError, setAttachmentError] = useState('')
   const [viewingAttachment, setViewingAttachment] = useState<string | null>(null)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
+  const [commitmentModal, setCommitmentModal] = useState<CommitmentModalState | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // Todas as categorias para o filtro (sem restrição de tipo/natureza)
@@ -307,8 +334,65 @@ export default function Records() {
     setMessage('Lançamento removido com sucesso.')
   }
 
+  function openCommitmentModal(entryId: string, type: CommitmentType) {
+    const entry = getLaunchEntryById(entryId)
+    if (!entry) return
+    const detected = type === 'installment' ? detectInstallment(entry.description) : null
+    setCommitmentModal({
+      entryId,
+      description: entry.description,
+      amount: entry.amount,
+      costType: entry.costType as CommitmentCostType,
+      startMonth: entry.month,
+      type,
+      endMonth: '',
+      totalInstallments: detected ? String(detected.total) : '',
+      currentInstallment: detected ? String(detected.current) : '1',
+      error: '',
+    })
+    setMenuOpenId(null)
+    setConfirmRemoveId(null)
+  }
+
+  function submitCommitment() {
+    if (!commitmentModal) return
+    const { description, amount, costType, startMonth, type, endMonth, totalInstallments, currentInstallment } = commitmentModal
+
+    if (type === 'installment') {
+      const total = Number(totalInstallments)
+      const current = Number(currentInstallment)
+      if (!Number.isInteger(total) || total <= 0) {
+        setCommitmentModal((m) => m && ({ ...m, error: 'Informe o total de parcelas.' }))
+        return
+      }
+      if (!Number.isInteger(current) || current <= 0 || current > total) {
+        setCommitmentModal((m) => m && ({ ...m, error: 'Parcela atual inválida.' }))
+        return
+      }
+    }
+
+    saveCommitment({
+      id: `rec-${Date.now()}`,
+      companyId: monthContext.companyId,
+      description,
+      amount,
+      type,
+      costType,
+      startMonth,
+      endMonth: type === 'fixed' && endMonth.trim() ? endMonth.trim() : null,
+      totalInstallments: type === 'installment' ? Number(totalInstallments) : null,
+      currentInstallment: type === 'installment' ? Number(currentInstallment) : null,
+      categoryId: null,
+      notes: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    setCommitmentModal(null)
+    setMessage(type === 'fixed' ? 'Adicionado como conta fixa em Previsão.' : 'Adicionado como parcelamento em Previsão.')
+  }
+
   return (
-    <ScreenContainer title="Ver Registros">
+    <ScreenContainer title="Registros">
       <Card className={styles.filtersCard}>
         <div className={styles.filtersHeader}>
           <h2 className={styles.sectionTitle}>Filtros</h2>
@@ -569,10 +653,7 @@ export default function Records() {
                         title={entry.flaggedForReview ? 'Remover revisão' : 'Marcar para revisão'}
                       >🚩</button>
                       {attached ? (
-                        <>
-                          <button type="button" className={styles.attachBtn} onClick={() => setViewingAttachment(entry.id)} title="Ver comprovante">📎 Ver</button>
-                          <button type="button" className={styles.attachRemoveBtn} onClick={() => handleRemoveAttachment(entry.id)} title="Remover comprovante">✕</button>
-                        </>
+                        <button type="button" className={styles.attachBtn} onClick={() => setViewingAttachment(entry.id)} title="Ver comprovante">📎</button>
                       ) : (
                         <>
                           <input
@@ -585,8 +666,34 @@ export default function Records() {
                           <button type="button" className={styles.attachBtn} onClick={() => fileInputRefs.current[entry.id]?.click()} title="Anexar comprovante">📎</button>
                         </>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(entry.id)} disabled={!canMutateEntry(entry.month)}>Editar</Button>
-                      <Button size="sm" variant="outline" onClick={() => removeEntry(entry.id)} disabled={!canMutateEntry(entry.month)}>Remover</Button>
+                      <div className={styles.rowMenu}>
+                        <button
+                          type="button"
+                          className={styles.menuBtn}
+                          onClick={() => { setMenuOpenId(menuOpenId === entry.id ? null : entry.id); setConfirmRemoveId(null) }}
+                          disabled={!canMutateEntry(entry.month)}
+                          aria-label="Mais opções"
+                        >⋯</button>
+                        {menuOpenId === entry.id && (
+                          <div className={styles.menuDropdown}>
+                            {confirmRemoveId === entry.id ? (
+                              <>
+                                <span className={styles.menuConfirmText}>Remover este lançamento?</span>
+                                <button type="button" className={styles.menuItemDanger} onClick={() => { removeEntry(entry.id); setMenuOpenId(null); setConfirmRemoveId(null) }}>Confirmar</button>
+                                <button type="button" className={styles.menuItemCancel} onClick={() => setConfirmRemoveId(null)}>Cancelar</button>
+                              </>
+                            ) : (
+                              <>
+                                <button type="button" className={styles.menuItem} onClick={() => { openEdit(entry.id); setMenuOpenId(null) }}>Editar</button>
+                                <button type="button" className={styles.menuItem} onClick={() => openCommitmentModal(entry.id, 'fixed')}>+ Conta fixa</button>
+                                <button type="button" className={styles.menuItem} onClick={() => openCommitmentModal(entry.id, 'installment')}>+ Parcelamento</button>
+                                <button type="button" className={styles.menuItemDanger} onClick={() => setConfirmRemoveId(entry.id)}>Remover</button>
+                                {attached && <button type="button" className={styles.menuItemDanger} onClick={() => { handleRemoveAttachment(entry.id); setMenuOpenId(null) }}>Remover comprovante</button>}
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </li>
@@ -616,6 +723,69 @@ export default function Records() {
           )
         })()}
       </Card>
+
+      {commitmentModal && (
+        <div className={styles.attachModal} onClick={() => setCommitmentModal(null)}>
+          <div className={styles.commitmentModalInner} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.attachModalHeader}>
+              <span className={styles.attachModalName}>
+                {commitmentModal.type === 'fixed' ? 'Adicionar como conta fixa' : 'Adicionar como parcelamento'}
+              </span>
+              <button type="button" className={styles.attachModalClose} onClick={() => setCommitmentModal(null)}>✕ Fechar</button>
+            </div>
+
+            <div className={styles.commitmentModalBody}>
+              <div className={styles.commitmentPreview}>
+                <span className={styles.commitmentPreviewLabel}>{commitmentModal.description}</span>
+                <strong className={styles.commitmentPreviewAmount}>{formatCurrency(commitmentModal.amount)}</strong>
+              </div>
+
+              {commitmentModal.type === 'fixed' ? (
+                <label className={styles.commitmentField}>
+                  <span>Data de fim (opcional)</span>
+                  <input
+                    type="month"
+                    value={commitmentModal.endMonth}
+                    min={commitmentModal.startMonth}
+                    onChange={(e) => setCommitmentModal((m) => m && ({ ...m, endMonth: e.target.value }))}
+                    placeholder={commitmentModal.startMonth}
+                  />
+                  <small className={styles.commitmentHint}>Deixe em branco para recorrência contínua.</small>
+                </label>
+              ) : (
+                <div className={styles.commitmentInstallmentRow}>
+                  <label className={styles.commitmentField}>
+                    <span>Parcela atual</span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={commitmentModal.currentInstallment}
+                      onChange={(e) => setCommitmentModal((m) => m && ({ ...m, currentInstallment: e.target.value }))}
+                    />
+                  </label>
+                  <span className={styles.commitmentOf}>de</span>
+                  <label className={styles.commitmentField}>
+                    <span>Total de parcelas</span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={commitmentModal.totalInstallments}
+                      onChange={(e) => setCommitmentModal((m) => m && ({ ...m, totalInstallments: e.target.value }))}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {commitmentModal.error && <p className={styles.commitmentError}>{commitmentModal.error}</p>}
+
+              <button type="button" className={styles.commitmentSubmit} onClick={submitCommitment}>
+                {commitmentModal.type === 'fixed' ? 'Salvar como conta fixa' : 'Salvar parcelamento'}
+              </button>
+              <small className={styles.commitmentHint}>Aparecerá em Previsão → Compromissos.</small>
+            </div>
+          </div>
+        </div>
+      )}
     </ScreenContainer>
   )
 }

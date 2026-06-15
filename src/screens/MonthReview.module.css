@@ -56,11 +56,41 @@
 
 .checklist {
   margin: 0;
-  padding-left: 18px;
+  padding: 0;
+  list-style: none;
   display: grid;
-  gap: 6px;
-  color: var(--color-text-secondary);
+  gap: 8px;
   font-size: 13px;
+}
+
+.checkDone {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--color-text-secondary);
+}
+
+.checkPending {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.checkIcon {
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.checkDone .checkIcon { color: var(--color-positive); }
+.checkPending .checkIcon { color: var(--color-text-tertiary); }
+
+.checkHint {
+  font-weight: 400;
+  color: var(--color-warning);
 }
 
 .warning {

@@ -284,7 +284,92 @@
 
 .rowActions {
   display: flex;
+  align-items: center;
   gap: 6px;
+}
+
+.rowMenu {
+  position: relative;
+}
+
+.menuBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 3px 10px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: border-color 0.15s, background-color 0.15s;
+  letter-spacing: 2px;
+}
+.menuBtn:hover:not(:disabled) { border-color: var(--color-border-strong); background: var(--color-surface-soft); }
+.menuBtn:disabled { opacity: 0.35; cursor: default; }
+
+.menuDropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-button);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  min-width: 170px;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuItem {
+  background: none;
+  border: none;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+.menuItem:hover { background: var(--color-surface-soft); }
+
+.menuItemDanger {
+  background: none;
+  border: none;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-negative);
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+.menuItemDanger:hover { background: color-mix(in srgb, var(--color-negative) 8%, var(--color-surface)); }
+
+.menuItemCancel {
+  background: none;
+  border: none;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+.menuItemCancel:hover { background: var(--color-surface-soft); }
+
+.menuConfirmText {
+  display: block;
+  padding: 8px 14px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2px;
 }
 
 /* Attachment */
@@ -379,6 +464,109 @@
   max-height: 60vh;
   object-fit: contain;
   border: none;
+}
+
+/* Commitment modal */
+.commitmentModalInner {
+  background: var(--color-surface);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.commitmentModalBody {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.commitmentPreview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
+}
+
+.commitmentPreviewLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commitmentPreviewAmount {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.commitmentField {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.commitmentField input {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  padding: 9px 12px;
+}
+
+.commitmentInstallmentRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.commitmentInstallmentRow .commitmentField {
+  flex: 1;
+}
+
+.commitmentOf {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  padding-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.commitmentSubmit {
+  width: 100%;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.commitmentSubmit:hover { opacity: 0.88; }
+
+.commitmentError {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-negative);
+  margin: 0;
+}
+
+.commitmentHint {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
 }
 
 .attachDownload {

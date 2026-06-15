@@ -229,6 +229,7 @@ export default function DRE() {
   const { month, label, prev, next, isAtLatest, isAtOldest } = useMonthNav({
     initialMonth: inferredMonth,
     oldestAllowedMonth: oldest,
+    sync: true,
   })
 
   const overview = getMonthlyOverview(month)
@@ -481,7 +482,7 @@ export default function DRE() {
           </header>
 
           <section className={styles.statementTable} aria-label="Demonstrativo DRE detalhado">
-            {detailedSections.map((section) => (
+            {detailedSections.filter((section) => section.key !== 'expenses').map((section) => (
               <div key={section.key} className={styles.statementSection}>
                 <div className={styles.statementSectionHeader}>
                   <h2 className={styles.statementTitle}>{section.title}</h2>

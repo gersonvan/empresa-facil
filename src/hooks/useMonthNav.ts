@@ -21,11 +21,15 @@ export function monthLabel(month: string): string {
   return `${MONTHS_PT[Number(m) - 1]} ${year}`
 }
 
+const SYNC_KEY = 'empresa-facil:active-month'
+
 export interface MonthNavOptions {
   /** Mês inicial no formato "YYYY-MM". Padrão: mês atual. */
   initialMonth?: string
   /** Mês mais antigo permitido "YYYY-MM". undefined = sem limite. */
   oldestAllowedMonth?: string
+  /** Sincroniza o mês selecionado com localStorage para persistir entre telas. */
+  sync?: boolean
 }
 
 /**
@@ -37,11 +41,11 @@ export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
       ? { initialMonth: initialMonthOrOptions }
       : (initialMonthOrOptions ?? {})
 
-  const { initialMonth, oldestAllowedMonth } = opts
+  const { initialMonth, oldestAllowedMonth, sync } = opts
 
   const [month, setMonth] = useState<string>(() => {
-    const start = initialMonth ?? currentMonth()
-    // Se o mês inicial estiver antes do limite, começa no limite
+    const synced = sync ? localStorage.getItem(SYNC_KEY) : null
+    const start = synced ?? initialMonth ?? currentMonth()
     if (oldestAllowedMonth && start < oldestAllowedMonth) return oldestAllowedMonth
     return start
   })
@@ -50,10 +54,16 @@ export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
 
   const isAtOldest = oldestAllowedMonth !== undefined && month <= oldestAllowedMonth
 
+  function updateMonth(next: string) {
+    if (sync) localStorage.setItem(SYNC_KEY, next)
+    setMonth(next)
+  }
+
   function prevMonth() {
     setMonth((m) => {
       const candidate = shiftMonth(m, -1)
       if (oldestAllowedMonth && candidate < oldestAllowedMonth) return m
+      if (sync) localStorage.setItem(SYNC_KEY, candidate)
       return candidate
     })
   }
@@ -65,8 +75,8 @@ export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
     isAtOldest,
     oldestAllowedMonth,
     prev: prevMonth,
-    next: () => setMonth((m) => shiftMonth(m, +1)),
-    goTo: (m: string) => setMonth(m),
-    reset: () => setMonth(currentMonth()),
+    next: () => updateMonth(shiftMonth(month, +1)),
+    goTo: (m: string) => updateMonth(m),
+    reset: () => updateMonth(currentMonth()),
   }
 }
