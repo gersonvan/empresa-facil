@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL } from '../config'
 import styles from './Login.module.css'
+import { EFSymbol, EFWordmark } from '../components/EFLogo'
 
 type MagicLinkState = 'idle' | 'loading' | 'sent' | 'error'
 
@@ -52,9 +53,9 @@ export default function Login() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <div className={styles.brandMark}>EF</div>
+          <EFSymbol size={56} />
           <div>
-            <div className={styles.brandTitle}>EmpresaFácil</div>
+            <EFWordmark size={22} />
             <div className={styles.brandSub}>Controle financeiro simples</div>
           </div>
         </div>

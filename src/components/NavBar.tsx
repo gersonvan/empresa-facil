@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import styles from './NavBar.module.css'
 import { useSyncStatus } from '../hooks/useSyncStatus'
 import { isAuthenticated } from '../authStore'
+import { EFSymbol, EFWordmark } from './EFLogo'
 
 const SYNC_LABELS: Record<string, string> = {
   idle: 'Sincronizado',
@@ -48,11 +49,9 @@ export default function NavBar() {
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.brand}>
-        <div className={styles.brandMark} aria-hidden="true">
-          EF
-        </div>
+        <EFSymbol size={36} onDark />
         <div className={styles.brandTextBlock}>
-          <span className={styles.brandTitle}>EmpresaFácil</span>
+          <EFWordmark size={15} onDark />
           <span className={styles.brandSubtitle}>Controle financeiro simples</span>
         </div>
       </div>

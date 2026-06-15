@@ -2,7 +2,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import MonthNav from '../components/MonthNav'
 import { useNavigate } from 'react-router-dom'
-import { formatCurrency, getMonthContext, getMonthlyOverview } from './financialOverview'
+import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
 import { listLaunchEntries } from '../launchStore'
 import { useMonthNav } from '../hooks/useMonthNav'
 import { useSubscription, oldestAllowedMonth } from '../hooks/useSubscription'
@@ -49,6 +49,17 @@ export default function Dashboard() {
     },
   ]
 
+  const { revenue, expenses, operatingResult } = overview.summary
+  const expenseRatio = revenue > 0 ? expenses / revenue : 0
+  const health =
+    revenue === 0
+      ? { tone: 'yellow', status: 'Sem dados no mês', detail: 'Lance receitas e despesas para ver a saúde financeira.', badge: '—' }
+      : operatingResult < 0
+        ? { tone: 'red', status: 'Resultado negativo', detail: `As despesas superam a receita em ${formatCurrency(Math.abs(operatingResult))}.`, badge: 'Prejuízo' }
+        : expenseRatio > 0.8
+          ? { tone: 'yellow', status: 'Atenção: margem apertada', detail: `${formatPercent(expenseRatio * 100)} da receita está comprometida com despesas.`, badge: 'Atenção' }
+          : { tone: 'green', status: 'Resultado saudável', detail: `Margem operacional de ${formatPercent((operatingResult / revenue) * 100)} no mês.`, badge: 'Saudável' }
+
   return (
     <ScreenContainer title="Dashboard">
       <div className={styles.actions}>
@@ -64,6 +75,15 @@ export default function Dashboard() {
           Registrar lançamento
         </Button>
       </div>
+
+      <Card className={styles.healthCard}>
+        <div className={`${styles.healthDot} ${styles[health.tone]}`} aria-hidden="true" />
+        <div className={styles.healthBody}>
+          <p className={`${styles.healthStatus} ${styles[health.tone]}`}>{health.status}</p>
+          <p className={styles.healthDetail}>{health.detail}</p>
+        </div>
+        <span className={`${styles.healthBadge} ${styles[health.tone]}`}>{health.badge}</span>
+      </Card>
 
       <Card className={styles.nextStepCard} padding="compact">
         <div className={styles.nextStepHeader}>

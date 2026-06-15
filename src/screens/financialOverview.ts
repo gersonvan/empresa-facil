@@ -56,7 +56,7 @@ function firstDayIso(month: string) {
   return `${month}-01T00:00:00.000Z`
 }
 
-function previousMonth(month: string) {
+export function previousMonth(month: string) {
   const [yearRaw, monthRaw] = month.split('-')
   const year = Number(yearRaw)
   const monthNumber = Number(monthRaw)

@@ -3,7 +3,7 @@ import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button, Input } from '../components/ui'
 import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { formatCurrency, getMonthContext } from './financialOverview'
-import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, updateLaunchEntry } from '../launchStore'
+import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, toggleReviewFlag, updateLaunchEntry } from '../launchStore'
 import { monthLifecycleStore } from '../monthLifecycle'
 import styles from './Records.module.css'
 
@@ -74,7 +74,9 @@ export default function Records() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [searchText, setSearchText] = useState('')
   const [editState, setEditState] = useState<EditState | null>(null)
+  const [onlyFlagged, setOnlyFlagged] = useState(false)
   const [message, setMessage] = useState('')
+  const [, forceUpdate] = useState(0)
 
   // Todas as categorias para o filtro (sem restrição de tipo/natureza)
   const allCategories = useMemo(() => listCategories(), [])
@@ -101,8 +103,10 @@ export default function Records() {
         dreGroup: dreGroupFilter,
         categoryId: categoryFilter || undefined,
         search: searchText || undefined,
+        flaggedForReview: onlyFlagged ? true : undefined,
       }),
-    [categoryFilter, costTypeFilter, dreGroupFilter, monthContext.companyId, monthFilter, searchText]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [categoryFilter, costTypeFilter, dreGroupFilter, monthContext.companyId, monthFilter, searchText, onlyFlagged]
   )
 
   const hasActiveFilters =
@@ -143,6 +147,42 @@ export default function Records() {
 
   function canMutateEntry(month: string) {
     return !monthLifecycleStore.isMonthClosed({ companyId: monthContext.companyId, month })
+  }
+
+  function handleToggleFlag(entryId: string) {
+    toggleReviewFlag(entryId)
+    forceUpdate((n) => n + 1)
+  }
+
+  function exportCsv() {
+    const allEntries = listLaunchEntries({
+      companyId: monthContext.companyId,
+      month: monthFilter,
+      costType: costTypeFilter,
+      dreGroup: dreGroupFilter,
+      categoryId: categoryFilter || undefined,
+      search: searchText || undefined,
+      flaggedForReview: onlyFlagged ? true : undefined,
+    })
+    const header = 'mes,data_criacao,tipo,natureza,categoria,descricao,valor,revisar'
+    const rows = allEntries.map((entry) => [
+      entry.month,
+      entry.createdAt.slice(0, 10),
+      entry.costType === 'company' ? 'Empresa' : 'Pessoal',
+      dreGroupLabel(entry.dreGroup),
+      entry.categoryName,
+      `"${entry.description.replace(/"/g, '""')}"`,
+      entry.amount.toFixed(2).replace('.', ','),
+      entry.flaggedForReview ? 'Sim' : 'Não',
+    ].join(','))
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `lancamentos-${monthFilter || 'todos'}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function openEdit(entryId: string) {
@@ -344,6 +384,18 @@ export default function Records() {
               {entries.length} de {totalUnfiltered}
             </span>
           )}
+          <div className={styles.listActions}>
+            <button
+              type="button"
+              className={`${styles.onlyFlaggedToggle} ${onlyFlagged ? styles.active : ''}`}
+              onClick={() => setOnlyFlagged((v) => !v)}
+            >
+              🚩 Para revisar
+            </button>
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              Exportar CSV
+            </Button>
+          </div>
         </div>
         <p className={styles.warning}>Atenção: após o fechamento do mês, edição e remoção ficam bloqueadas.</p>
         {message ? <p className={styles.message}>{message}</p> : null}
@@ -463,9 +515,12 @@ export default function Records() {
         ) : (
           <ul className={styles.list}>
             {entries.map((entry) => (
-              <li key={entry.id} className={styles.row}>
+              <li key={entry.id} className={`${styles.row} ${entry.flaggedForReview ? styles.rowFlagged : ''}`}>
                 <div className={styles.rowInfo}>
-                  <p className={styles.rowTitle}>{entry.description}</p>
+                  <p className={styles.rowTitle}>
+                    {entry.description}
+                    {entry.flaggedForReview && <span className={styles.flaggedBadge}>Para revisar</span>}
+                  </p>
                   <p className={styles.rowMeta}>
                     {costTypeLabel(entry.costType)} · {dreGroupLabel(entry.dreGroup)} · {entry.categoryName} · {entry.month}
                   </p>
@@ -473,6 +528,15 @@ export default function Records() {
                 <div className={styles.rowTail}>
                   <strong className={styles.rowAmount}>{formatCurrency(entry.amount)}</strong>
                   <div className={styles.rowActions}>
+                    <button
+                      type="button"
+                      className={`${styles.flagBtn} ${entry.flaggedForReview ? styles.flagActive : ''}`}
+                      onClick={() => handleToggleFlag(entry.id)}
+                      title={entry.flaggedForReview ? 'Remover marcação de revisão' : 'Marcar para revisão'}
+                      aria-label={entry.flaggedForReview ? 'Remover marcação de revisão' : 'Marcar para revisão'}
+                    >
+                      🚩
+                    </button>
                     <Button size="sm" variant="ghost" onClick={() => openEdit(entry.id)} disabled={!canMutateEntry(entry.month)}>
                       Editar
                     </Button>

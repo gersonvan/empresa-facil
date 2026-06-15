@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { jsPDF } from 'jspdf'
 import { getActiveCompany } from '../companyStore'
 import { listLaunchEntries } from '../launchStore'
-import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview } from './financialOverview'
+import { formatCurrency, formatPercent, getMonthContext, getMonthlyOverview, previousMonth } from './financialOverview'
 import { useMonthNav } from '../hooks/useMonthNav'
 import { useSubscription, oldestAllowedMonth } from '../hooks/useSubscription'
 import styles from './DRE.module.css'
@@ -26,6 +26,21 @@ interface BucketSection {
   title: string
   rows: DetailedRow[]
   total: number
+}
+
+function calcDelta(current: number, prev: number): { pct: number | null; tone: 'up' | 'down' | 'flat' } {
+  if (prev === 0) return { pct: null, tone: 'flat' }
+  const pct = ((current - prev) / Math.abs(prev)) * 100
+  return { pct, tone: pct > 1 ? 'up' : pct < -1 ? 'down' : 'flat' }
+}
+
+function DeltaBadge({ current, prev, invertTone = false }: { current: number; prev: number; invertTone?: boolean }) {
+  const { pct, tone } = calcDelta(current, prev)
+  if (pct === null) return null
+  const displayTone = invertTone ? (tone === 'up' ? 'down' : tone === 'down' ? 'up' : 'flat') : tone
+  const cls = displayTone === 'up' ? styles.deltaUp : displayTone === 'down' ? styles.deltaDown : styles.deltaFlat
+  const arrow = pct > 1 ? '▲' : pct < -1 ? '▼' : '→'
+  return <span className={`${styles.delta} ${cls}`}>{arrow} {Math.abs(pct).toFixed(1).replace('.', ',')}%</span>
 }
 
 function toMonthLabel(month: string) {
@@ -225,6 +240,8 @@ export default function DRE() {
     .map((entry) => ({ categoryName: entry.categoryName, amount: entry.amount }))
   const expenseBuckets = buildExpenseBuckets(expenseEntries)
   const financialIncome = overview.summary.financialIncome
+
+  const prevOverview = getMonthlyOverview(previousMonth(month))
 
   const revenueTotal = detailedSections.find((section) => section.key === 'revenue')?.total ?? 0
   const deductionsTotal = detailedSections.find((section) => section.key === 'deductions')?.total ?? 0
@@ -562,20 +579,30 @@ export default function DRE() {
           <dl className={styles.summaryList}>
             <div className={styles.summaryRow}>
               <dt>Receita</dt>
-              <dd>{formatCurrency(overview.summary.revenue)}</dd>
+              <dd>
+                {formatCurrency(overview.summary.revenue)}
+                <DeltaBadge current={overview.summary.revenue} prev={prevOverview.summary.revenue} />
+              </dd>
             </div>
             <div className={styles.summaryRow}>
               <dt>Deduções</dt>
-              <dd>{formatCurrency(overview.summary.deductions)}</dd>
+              <dd>
+                {formatCurrency(overview.summary.deductions)}
+                <DeltaBadge current={overview.summary.deductions} prev={prevOverview.summary.deductions} invertTone />
+              </dd>
             </div>
             <div className={styles.summaryRow}>
               <dt>Despesas</dt>
-              <dd>{formatCurrency(overview.summary.expenses)}</dd>
+              <dd>
+                {formatCurrency(overview.summary.expenses)}
+                <DeltaBadge current={overview.summary.expenses} prev={prevOverview.summary.expenses} invertTone />
+              </dd>
             </div>
             <div className={styles.summaryRow}>
               <dt>Resultado operacional</dt>
               <dd className={overview.summary.operatingResult >= 0 ? styles.pos : styles.neg}>
                 {formatCurrency(overview.summary.operatingResult)}
+                <DeltaBadge current={overview.summary.operatingResult} prev={prevOverview.summary.operatingResult} />
               </dd>
             </div>
           </dl>

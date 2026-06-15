@@ -36,6 +36,7 @@ export interface StoredLaunchEntry {
   reviewStatus?: EntryReviewStatus
   linkedEntryId?: string
   estimationSnapshot?: EstimationSnapshot
+  flaggedForReview?: boolean
 }
 
 function hasLocalStorage() {
@@ -124,6 +125,7 @@ function normalizeEntry(entry: unknown): StoredLaunchEntry | null {
         : 'approved',
     linkedEntryId: typeof input.linkedEntryId === 'string' && input.linkedEntryId.trim() ? input.linkedEntryId : undefined,
     estimationSnapshot,
+    flaggedForReview: Boolean(input.flaggedForReview),
   }
 }
 
@@ -282,10 +284,11 @@ interface ListLaunchEntriesFilters {
   dreGroup?: DreGroup | 'all'
   categoryId?: string
   search?: string
+  flaggedForReview?: boolean
 }
 
 export function listLaunchEntries(filters: ListLaunchEntriesFilters = {}) {
-  const { companyId, month, costType = 'all', dreGroup = 'all', categoryId, search } = filters
+  const { companyId, month, costType = 'all', dreGroup = 'all', categoryId, search, flaggedForReview } = filters
   const searchLower = search?.trim().toLowerCase()
 
   return readEntries()
@@ -314,9 +317,23 @@ export function listLaunchEntries(filters: ListLaunchEntriesFilters = {}) {
         return false
       }
 
+      if (flaggedForReview === true && !entry.flaggedForReview) {
+        return false
+      }
+
       return true
     })
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+}
+
+export function toggleReviewFlag(entryId: string) {
+  const current = readEntries()
+  const index = current.findIndex((entry) => entry.id === entryId)
+  if (index === -1) return
+
+  const next = [...current]
+  next[index] = { ...next[index], flaggedForReview: !next[index].flaggedForReview }
+  writeEntries(next)
 }
 
 export function listLaunchLines({ companyId, month }: { companyId: string; month: string }): DreLineInput[] {
