@@ -590,7 +590,7 @@ export default function CashFlowProjection() {
         <div className={styles.tableHeader}>
           <h2 className={styles.sectionTitle}>Previsão mensal</h2>
           <span className={styles.contextText}>
-            Empresa: {monthContext.companyId} · Referência: {formatMonthLabel(monthContext.month)}
+            Empresa: {monthContext.companyName} · Referência: {formatMonthLabel(monthContext.month)}
           </span>
         </div>
 

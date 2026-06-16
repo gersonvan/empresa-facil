@@ -70,7 +70,7 @@ export default function TaxProfileSettings() {
       <Card className={styles.formCard}>
         <h2 className={styles.sectionTitle}>Perfil por empresa ativa</h2>
         <p className={styles.helper}>
-          Empresa ativa: <strong>{monthContext.companyId}</strong>. Este valor define a faixa usada para gerar deduções
+          Empresa ativa: <strong>{monthContext.companyName}</strong>. Este valor define a faixa usada para gerar deduções
           estimadas automaticamente em novas receitas empresariais.
         </p>
 
