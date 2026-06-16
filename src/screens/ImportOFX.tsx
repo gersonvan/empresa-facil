@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import ScreenContainer from '../components/ScreenContainer'
 import { Card, Button } from '../components/ui'
 import { parseOFXText, type OFXTransaction } from '../lib/parseOFX'
+import { suggestCategory } from '../lib/categorizeOFX'
 import { saveLaunchEntry, listLaunchEntries } from '../launchStore'
 import { getMonthContext } from './financialOverview'
 import { formatCurrency } from './financialOverview'
@@ -32,7 +33,7 @@ export default function ImportOFX() {
   const [dragging, setDragging] = useState(false)
   const [rows, setRows] = useState<OFXRow[] | null>(null)
   const [parseError, setParseError] = useState('')
-  const [result, setResult] = useState<{ novos: number; duplicados: number } | null>(null)
+  const [result, setResult] = useState<{ novos: number; duplicados: number; categorizados: number } | null>(null)
   const [importing, setImporting] = useState(false)
 
   function buildDuplicateSet() {
@@ -42,7 +43,7 @@ export default function ImportOFX() {
   }
 
   function processFile(file: File) {
-    if (!file.name.toLowerCase().endsWith('.ofx') && !file.name.toLowerCase().endsWith('.ofx')) {
+    if (!file.name.toLowerCase().endsWith('.ofx')) {
       setParseError('Selecione um arquivo .ofx')
       return
     }
@@ -100,26 +101,29 @@ export default function ImportOFX() {
     const selected = rows.filter((r) => r.selected && !r.isDuplicate)
     const now = new Date().toISOString()
     let novos = 0
+    let categorizados = 0
 
     for (const row of selected) {
+      const suggestion = suggestCategory(row.description, row.costType, row.type)
       saveLaunchEntry({
         id: row.id,
         companyId,
         month: row.month,
         costType: row.costType,
-        dreGroup: row.type === 'Entrada' ? 'revenue' : 'expenses',
-        categoryId: '',
-        categoryName: 'Importado (OFX)',
+        dreGroup: suggestion?.dreGroup ?? (row.type === 'Entrada' ? 'revenue' : 'expenses'),
+        categoryId: suggestion?.categoryId ?? '',
+        categoryName: suggestion?.categoryName ?? 'Importado (OFX)',
         description: row.description,
         amount: row.amount,
         createdAt: now,
         flaggedForReview: true,
       })
       novos++
+      if (suggestion) categorizados++
     }
 
     const skipped = rows.filter((r) => r.selected && r.isDuplicate).length
-    setResult({ novos, duplicados: skipped })
+    setResult({ novos, duplicados: skipped, categorizados })
     setRows(null)
     setImporting(false)
   }
@@ -135,7 +139,8 @@ export default function ImportOFX() {
           <div className={styles.successIcon}>✅</div>
           <h2 className={styles.successTitle}>{result.novos} lançamento{result.novos !== 1 ? 's' : ''} importado{result.novos !== 1 ? 's' : ''}!</h2>
           <p className={styles.successDetail}>
-            Todos foram marcados para revisão para que você confira a categoria antes de fechar o mês.
+            {result.categorizados > 0 && `${result.categorizados} de ${result.novos} categorizados automaticamente. `}
+            Todos foram marcados para revisão — confira a categoria antes de fechar o mês.
             {result.duplicados > 0 && ` ${result.duplicados} duplicata${result.duplicados > 1 ? 's' : ''} ignorada${result.duplicados > 1 ? 's' : ''}.`}
           </p>
           <div className={styles.successActions}>
@@ -181,7 +186,7 @@ export default function ImportOFX() {
       ) : (
         <Card>
           <div className={styles.previewHeader}>
-            <h2 className={styles.previewTitle}>{rows.length} transação{rows.length !== 1 ? 'ões' : ''} encontrada{rows.length !== 1 ? 's' : ''}</h2>
+            <h2 className={styles.previewTitle}>{rows.length} {rows.length !== 1 ? 'transações' : 'transação'} encontrada{rows.length !== 1 ? 's' : ''}</h2>
             <div className={styles.bulkActions}>
               <span className={styles.bulkLabel}>Selecionados:</span>
               <Button size="sm" variant="secondary" onClick={() => setBulkCostType('company')} disabled={!someSelected}>Empresa</Button>
@@ -206,60 +211,71 @@ export default function ImportOFX() {
                   <th style={{ textAlign: 'right' }}>Valor</th>
                   <th>Tipo</th>
                   <th>Conta</th>
+                  <th>Categoria sugerida</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={`${!row.selected ? styles.rowDisabled : ''} ${row.isDuplicate ? styles.rowDuplicate : ''}`}
-                  >
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={row.selected}
-                        disabled={row.isDuplicate}
-                        onChange={(e) => updateRow(row.id, { selected: e.target.checked })}
-                      />
-                    </td>
-                    <td className={styles.date}>{formatDate(row.date)}</td>
-                    <td>
-                      {row.isDuplicate ? (
-                        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{row.description} <span className={styles.dupBadge}>duplicado</span></span>
-                      ) : (
+                {rows.map((row) => {
+                  const suggestion = !row.isDuplicate ? suggestCategory(row.description, row.costType, row.type) : null
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`${!row.selected ? styles.rowDisabled : ''} ${row.isDuplicate ? styles.rowDuplicate : ''}`}
+                    >
+                      <td>
                         <input
-                          className={styles.descInput}
-                          value={row.description}
-                          onChange={(e) => updateRow(row.id, { description: e.target.value })}
+                          type="checkbox"
+                          checked={row.selected}
+                          disabled={row.isDuplicate}
+                          onChange={(e) => updateRow(row.id, { selected: e.target.checked })}
                         />
-                      )}
-                    </td>
-                    <td className={`${styles.amount} ${row.type === 'Entrada' ? styles.entrada : styles.saida}`}>
-                      {row.type === 'Saída' ? '−' : '+'}{formatCurrency(row.amount)}
-                    </td>
-                    <td>
-                      <span className={`${styles.typeBadge} ${row.type === 'Entrada' ? styles.entrada : styles.saida}`}>
-                        {row.type}
-                      </span>
-                    </td>
-                    <td>
-                      {!row.isDuplicate && (
-                        <div className={styles.costToggle}>
-                          <button
-                            type="button"
-                            className={`${styles.costBtn} ${row.costType === 'company' ? styles.active : ''}`}
-                            onClick={() => updateRow(row.id, { costType: 'company' })}
-                          >Empresa</button>
-                          <button
-                            type="button"
-                            className={`${styles.costBtn} ${row.costType === 'personal' ? styles.active : ''}`}
-                            onClick={() => updateRow(row.id, { costType: 'personal' })}
-                          >Pessoal</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className={styles.date}>{formatDate(row.date)}</td>
+                      <td>
+                        {row.isDuplicate ? (
+                          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{row.description} <span className={styles.dupBadge}>duplicado</span></span>
+                        ) : (
+                          <input
+                            className={styles.descInput}
+                            value={row.description}
+                            onChange={(e) => updateRow(row.id, { description: e.target.value })}
+                          />
+                        )}
+                      </td>
+                      <td className={`${styles.amount} ${row.type === 'Entrada' ? styles.entrada : styles.saida}`}>
+                        {row.type === 'Saída' ? '−' : '+'}{formatCurrency(row.amount)}
+                      </td>
+                      <td>
+                        <span className={`${styles.typeBadge} ${row.type === 'Entrada' ? styles.entrada : styles.saida}`}>
+                          {row.type}
+                        </span>
+                      </td>
+                      <td>
+                        {!row.isDuplicate && (
+                          <div className={styles.costToggle}>
+                            <button
+                              type="button"
+                              className={`${styles.costBtn} ${row.costType === 'company' ? styles.active : ''}`}
+                              onClick={() => updateRow(row.id, { costType: 'company' })}
+                            >Empresa</button>
+                            <button
+                              type="button"
+                              className={`${styles.costBtn} ${row.costType === 'personal' ? styles.active : ''}`}
+                              onClick={() => updateRow(row.id, { costType: 'personal' })}
+                            >Pessoal</button>
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {suggestion ? (
+                          <span className={styles.categorySuggestion}>{suggestion.categoryName}</span>
+                        ) : (
+                          !row.isDuplicate && <span className={styles.categoryEmpty}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -267,7 +283,7 @@ export default function ImportOFX() {
           <div className={styles.footer}>
             <span className={styles.footerInfo}>
               {selectedCount} lançamento{selectedCount !== 1 ? 's' : ''} para importar
-              {rows.filter((r) => r.isDuplicate).length > 0 && ` · ${rows.filter((r) => r.isDuplicate).length} duplicado${rows.filter((r) => r.isDuplicate).length > 1 ? 's' : ''} (ignorado${rows.filter((r) => r.isDuplicate).length > 1 ? 's' : ''})`}
+              {rows.filter((r) => r.isDuplicate).length > 0 && ` · ${rows.filter((r) => r.isDuplicate).length} duplicado${rows.filter((r) => r.isDuplicate).length > 1 ? 's' : ''} ignorado${rows.filter((r) => r.isDuplicate).length > 1 ? 's' : ''}`}
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button variant="secondary" onClick={() => setRows(null)}>Cancelar</Button>
