@@ -58,6 +58,17 @@ steps:
       - dist/
       - gs://empresafacil.gersonvan.com.br
 
+  # ── Frontend: no-cache no index.html para evitar cache desatualizado ──────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: frontend-nocache
+    waitFor: [frontend-deploy]
+    entrypoint: gsutil
+    args:
+      - setmeta
+      - -h
+      - 'Cache-Control:no-cache, no-store, must-revalidate'
+      - gs://empresafacil.gersonvan.com.br/index.html
+
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: E2_MEDIUM
