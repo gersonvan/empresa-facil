@@ -16,6 +16,7 @@ const SYNC_LABELS: Record<string, string> = {
 const navItems = [
   { path: '/dashboard', label: 'Início' },
   { path: '/launch', label: 'Lançar' },
+  { path: '/import-ofx', label: 'Importar' },
   { path: '/records', label: 'Registros' },
   { path: '/category-insights', label: 'Análise' },
   { path: '/deduction-review', label: 'Impostos' },
