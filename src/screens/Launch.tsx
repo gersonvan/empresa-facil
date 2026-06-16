@@ -347,6 +347,19 @@ export default function Launch() {
                 }
                 errorText={errors.amount}
               />
+              <label className={`${styles.recurringCard} ${form.recurring ? styles.recurringCardActive : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={form.recurring}
+                  onChange={(e) => setForm((prev) => ({ ...prev, recurring: e.target.checked }))}
+                  className={styles.recurringCardCheckbox}
+                />
+                <span className={styles.recurringCardIcon}>🔁</span>
+                <span className={styles.recurringCardText}>
+                  <strong>Repetir mensalmente</strong>
+                  <span className={styles.recurringHint}> — será sugerido todo mês no Dashboard</span>
+                </span>
+              </label>
               <details className={styles.optionalDetails}>
                 <summary className={styles.optionalSummary}>Campos opcionais (deixar para depois)</summary>
                 <div className={styles.optionalContent}>
@@ -356,17 +369,6 @@ export default function Launch() {
                     value={form.notes}
                     onChange={(event) => setForm((prevState) => ({ ...prevState, notes: event.target.value }))}
                   />
-                  <label className={styles.recurringToggle}>
-                    <input
-                      type="checkbox"
-                      checked={form.recurring}
-                      onChange={(e) => setForm((prev) => ({ ...prev, recurring: e.target.checked }))}
-                    />
-                    <span>
-                      <strong>Repetir mensalmente</strong>
-                      <span className={styles.recurringHint}> — será sugerido todo mês no Dashboard</span>
-                    </span>
-                  </label>
                 </div>
               </details>
             </div>
