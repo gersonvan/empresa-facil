@@ -18,6 +18,7 @@ const steps = [
     bullets: [
       'Passo 1: escolha Empresa ou Pessoal.',
       'Passo 2: preencha Descrição e Valor (obrigatórios).',
+      'Ative "Repetir mensalmente" para despesas fixas — o sistema sugere o lançamento todo mês.',
       'Passo 3: confirme e salve.',
     ],
   },
@@ -71,6 +72,25 @@ const steps = [
       'Gere o ajuste de reconciliação para fechar o mês com rastreabilidade.',
     ],
   },
+  {
+    title: '9. Importação de extrato bancário (OFX)',
+    bullets: [
+      'Baixe o arquivo .ofx no internet banking do seu banco (Itaú, Bradesco, Santander, BB, Caixa, Nubank, Inter e outros).',
+      'Clique em "Importar" na barra de navegação, arraste o arquivo ou selecione pelo botão.',
+      'Revise a prévia: edite descrições, escolha Empresa ou Pessoal por linha e veja a categoria sugerida automaticamente.',
+      'Duplicatas (mesmo valor + descrição já existente) são detectadas e ignoradas automaticamente.',
+      'Todos os lançamentos importados ficam marcados para revisão — confirme as categorias antes de fechar o mês.',
+    ],
+  },
+  {
+    title: '10. Categorização automática por regras',
+    bullets: [
+      'Ao importar um OFX, o sistema sugere a categoria com base em palavras-chave da descrição bancária.',
+      'Exemplos: "DAS SIMPLES" → Impostos e taxas; "AWS" → Software e tecnologia; "META ADS" → Marketing.',
+      'Funciona sem internet e sem custo — processado direto no navegador.',
+      'Se a sugestão não for adequada, ajuste a categoria manualmente nos Registros antes de fechar o mês.',
+    ],
+  },
 ]
 
 export default function Training() {
@@ -103,6 +123,7 @@ export default function Training() {
         <ul className={styles.list}>
           <li>Conseguiu cadastrar 1 lançamento de Empresa.</li>
           <li>Conseguiu cadastrar 1 lançamento de Pessoal.</li>
+          <li>Ativou "Repetir mensalmente" em uma despesa fixa recorrente.</li>
           <li>Conseguiu registrar 1 dedução separada de despesa.</li>
           <li>Conseguiu interpretar o Resultado no DRE.</li>
           <li>Entendeu o fechamento mensal e o bloqueio de período fechado.</li>
@@ -110,6 +131,8 @@ export default function Training() {
           <li>Conseguiu editar um compromisso e consultar o histórico de alterações.</li>
           <li>Conseguiu revisar 1 dedução prevista e alterar seu status.</li>
           <li>Conseguiu executar reconciliação mensal de deduções com ajuste.</li>
+          <li>Importou um extrato OFX do banco e revisou as transações na prévia.</li>
+          <li>Verificou as categorias sugeridas automaticamente e ajustou as incorretas.</li>
         </ul>
       </Card>
     </ScreenContainer>
