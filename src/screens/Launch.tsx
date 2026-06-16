@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import ScreenContainer from '../components/ScreenContainer'
 import { createLaunchEntry } from '../domain'
 import { toIngestionRecord } from '../contracts'
@@ -375,7 +375,7 @@ export default function Launch() {
           <section className={styles.step} aria-label="Passo 3 de 3">
             <h2 className={styles.stepTitle}>3. Confirmar e salvar</h2>
             <p className={styles.stepHint}>
-              Empresa ativa: <strong>{monthContext.companyId}</strong> · Mês: <strong>{currentMonth}</strong>
+              Empresa ativa: <strong>{monthContext.companyName}</strong> · Mês: <strong>{currentMonth}</strong>
             </p>
             <p className={styles.stepHint}>
               Natureza selecionada: <strong>{dreGroupLabel(form.dreGroup)}</strong>. No Simples Nacional, deduções reduzem
@@ -397,6 +397,13 @@ export default function Launch() {
           </section>
         </form>
       </Card>
+      <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 12 }}>
+        Tem vários lançamentos do banco?{' '}
+        <Link to="/import-ofx" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
+          Importar extrato OFX
+        </Link>{' '}
+        é mais rápido.
+      </p>
     </ScreenContainer>
   )
 }
