@@ -4,3 +4,9 @@ node_modules/
 dist/
 padtec/confluence-mermaid-package/config.js
 *.adf.json
+.vercel
+.env
+.env.local
+.env.*.local
+server/.env
+server/.env.local
