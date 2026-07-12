@@ -7,19 +7,21 @@ function createDbPool(databaseUrl) {
 
   const allowUnverifiedSsl =
     process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === "false";
-  const connectionString = allowUnverifiedSsl
-    ? (() => {
-        const url = new URL(databaseUrl);
-        url.searchParams.delete("sslmode");
-        url.searchParams.delete("uselibpqcompat");
-        return url.toString();
-      })()
-    : databaseUrl;
 
-  return new Pool({
-    connectionString,
-    ...(allowUnverifiedSsl ? { ssl: { rejectUnauthorized: false } } : {}),
-  });
+  if (allowUnverifiedSsl) {
+    const url = new URL(databaseUrl);
+
+    return new Pool({
+      host: url.hostname,
+      port: Number(url.port || 5432),
+      database: url.pathname.slice(1),
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      ssl: { rejectUnauthorized: false },
+    });
+  }
+
+  return new Pool({ connectionString: databaseUrl });
 }
 
 async function checkDatabase(pool) {
