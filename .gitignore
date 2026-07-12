@@ -2,4 +2,5 @@
 .apm/worktrees/
 node_modules/
 dist/
-
+padtec/confluence-mermaid-package/config.js
+*.adf.json
