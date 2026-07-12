@@ -5,7 +5,13 @@ function createDbPool(databaseUrl) {
     throw new Error("DATABASE_URL is required to start the sync server.");
   }
 
-  return new Pool({ connectionString: databaseUrl });
+  const allowUnverifiedSsl =
+    process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === "false";
+
+  return new Pool({
+    connectionString: databaseUrl,
+    ...(allowUnverifiedSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
 }
 
 async function checkDatabase(pool) {
