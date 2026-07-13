@@ -2,6 +2,14 @@
 
 EmpresaFacil e uma aplicacao web full-stack para controle financeiro de pequenos negocios. O frontend fica na raiz do projeto e usa os scripts `dev`, `build`, `preview` e `test` definidos em `package.json:6-12`; o backend fica em `server/` e expoe servidor de sincronizacao, autenticacao, membros, onboarding, administracao e billing pelos scripts de `server/package.json:6-10`.
 
+## Producao
+
+- Aplicacao: `https://empresafacil.gersonvan.com.br`
+- API: `https://empresafacil-api.onrender.com/health`
+- Banco: Supabase (projeto `empresafacil-prod`, regiao Sao Paulo)
+
+O frontend e publicado na Vercel e a API no Render, ambos a partir de `main`. O ambiente GCP anterior esta preservado, porem desativado de forma reversivel. Consulte `docs/11-infraestrutura-e-deployment.md` e `docs/operacao-producao.md` antes de qualquer alteracao de infraestrutura.
+
 ## Documentacao tecnica
 
 A documentacao tecnica reversa gerada pelo PADTec esta em `docs/`:
@@ -22,6 +30,7 @@ A documentacao tecnica reversa gerada pelo PADTec esta em `docs/`:
 - `docs/integracoes-externas.md`
 - `docs/notificacoes.md`
 - `docs/multi-tenancy.md`
+- `docs/operacao-producao.md`
 
 ## Comandos principais
 

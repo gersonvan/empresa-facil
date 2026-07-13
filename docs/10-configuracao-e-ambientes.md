@@ -8,6 +8,7 @@
 | `PORT` | Porta do backend | `3333` | Nao | dev/prod | `server/src/config.js:12`; `docker-compose.yml:28`; `render.yaml:16` |
 | `HOST` | Host bind do backend | `0.0.0.0` | Nao | dev/prod | `server/src/config.js:13`; `docker-compose.yml:29`; `render.yaml:18` |
 | `DATABASE_URL` | Conexao PostgreSQL | vazio | Sim | dev/prod | `server/src/config.js:14`; `server/src/db.js:5`; `docker-compose.yml:30`; `render.yaml:21` |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | Permite conexao TLS ao pooler do Supabase sem validar a cadeia local | ausente/`false` por provedor | Nao | prod Supabase | `server/src/db.js`; `server/.env.example` |
 | `SYNC_PULL_LIMIT` | Limite de eventos por pull | `500` | Nao | dev/prod | `server/src/config.js:15` |
 | `JWT_SECRET` | Segredo de assinatura JWT | `dev-secret-troque-em-producao` | Sim em prod | dev/prod | `server/src/config.js:16`; `render.yaml:23` |
 | `GOOGLE_CLIENT_ID` | Client id OAuth Google | vazio | Nao | prod se Google ativo | `server/src/config.js:17` |
@@ -56,6 +57,13 @@
 | OAuth | Variaveis de ambiente | `GOOGLE_*`, `MICROSOFT_*` | `server/src/config.js:17-20` |
 | SMTP | Variaveis de ambiente | `SMTP_*` | `server/src/config.js:23-27` |
 | Stripe | Variaveis de ambiente | `STRIPE_*` | `server/src/config.js:28-31` |
+
+## Configuracao de producao atual
+
+- Na Vercel, `VITE_API_URL` deve apontar para a API publica do Render. E uma variavel publica de build e nao deve conter segredos.
+- No Render, `DATABASE_URL`, `JWT_SECRET`, `DATABASE_SSL_REJECT_UNAUTHORIZED`, `BACKEND_URL` e `FRONTEND_URL` sao configurados no painel do servico.
+- `DATABASE_SSL_REJECT_UNAUTHORIZED=false` e necessario somente no ambiente que usa o pooler do Supabase. Em outros provedores, mantenha a validacao TLS padrao.
+- OAuth, SMTP e Stripe continuam opcionais: as funcionalidades correspondentes so devem ser habilitadas apos a configuracao das respectivas credenciais e URLs de callback.
 
 ## Validacao de configuracao na inicializacao
 
