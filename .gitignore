@@ -1,5 +1,6 @@
 
 .apm/worktrees/
+.DS_Store
 node_modules/
 dist/
 padtec/confluence-mermaid-package/config.js
