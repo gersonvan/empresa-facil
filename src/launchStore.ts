@@ -17,6 +17,7 @@ const DEDUCTION_FORMULA_VERSION = DEFAULT_DEDUCTION_FORMULA_VERSION
 
 export type EntrySourceType = 'manual' | 'tax_estimation' | 'bank_import'
 export type EntryReviewStatus = 'suggested' | 'approved' | 'rejected' | 'edited'
+export type AccountOrigin = 'company' | 'personal' | 'unknown'
 
 export type EstimationSnapshot = DeductionEstimationSnapshot
 
@@ -25,6 +26,7 @@ export interface StoredLaunchEntry {
   companyId: string
   month: string
   costType: 'company' | 'personal'
+  accountOrigin: AccountOrigin
   dreGroup: DreGroup
   categoryId: string
   categoryName: string
@@ -109,6 +111,10 @@ function normalizeEntry(entry: unknown): StoredLaunchEntry | null {
     companyId: String(input.companyId),
     month: String(input.month),
     costType: input.costType === 'personal' ? 'personal' : 'company',
+    accountOrigin:
+      input.accountOrigin === 'company' || input.accountOrigin === 'personal'
+        ? input.accountOrigin
+        : 'unknown',
     dreGroup:
       input.dreGroup === 'revenue' || input.dreGroup === 'deductions' ? input.dreGroup : 'expenses',
     categoryId: input.categoryId ? String(input.categoryId) : 'uncategorized',
@@ -195,6 +201,7 @@ function upsertLinkedEstimationEntry(entries: StoredLaunchEntry[], revenueEntry:
     companyId: revenueEntry.companyId,
     month: revenueEntry.month,
     costType: 'company',
+    accountOrigin: 'unknown',
     dreGroup: 'deductions',
     categoryId: category.id,
     categoryName: category.name,
@@ -349,8 +356,16 @@ export function toggleReviewFlag(entryId: string) {
   writeEntries(next)
 }
 
-export function listLaunchLines({ companyId, month }: { companyId: string; month: string }): DreLineInput[] {
-  return listLaunchEntries({ companyId, month })
+export function listLaunchLines({
+  companyId,
+  month,
+  costType = 'all',
+}: {
+  companyId: string
+  month: string
+  costType?: 'company' | 'personal' | 'all'
+}): DreLineInput[] {
+  return listLaunchEntries({ companyId, month, costType })
     .filter((entry) => entry.reviewStatus !== 'rejected')
     .map((entry) =>
       createDreLineInput({

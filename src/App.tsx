@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Shell from './components/Shell'
 import RequireAuth from './components/RequireAuth'
+import RequireGuest from './components/RequireGuest'
 import RequireAdmin from './components/RequireAdmin'
 import AppRouter from './router'
 import Login from './screens/Login'
@@ -15,7 +16,7 @@ import Terms from './screens/Terms'
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<RequireGuest><Login /></RequireGuest>} />
       <Route path="/privacidade" element={<Privacy />} />
       <Route path="/termos" element={<Terms />} />
       <Route path="/auth/callback" element={<AuthCallback />} />

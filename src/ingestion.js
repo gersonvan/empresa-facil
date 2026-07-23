@@ -1,4 +1,4 @@
-import { COST_TYPE_VALUES, normalizeMonth } from "./domain.js";
+import { ACCOUNT_ORIGIN_VALUES, COST_TYPE_VALUES, normalizeMonth } from "./domain.js";
 
 function assertRepository(repository) {
   if (!repository || typeof repository.addLaunchEntry !== "function") {
@@ -42,10 +42,15 @@ function normalizeManualEntryInput(input) {
     throw new Error(`costType must be one of: ${COST_TYPE_VALUES.join(", ")}.`);
   }
 
+  if (input.accountOrigin !== undefined && !ACCOUNT_ORIGIN_VALUES.includes(input.accountOrigin)) {
+    throw new Error(`accountOrigin must be one of: ${ACCOUNT_ORIGIN_VALUES.join(", ")}.`);
+  }
+
   return {
     companyId: input.companyId.trim(),
     month: normalizeMonth(input.month),
     costType: input.costType,
+    ...(input.accountOrigin !== undefined ? { accountOrigin: input.accountOrigin } : {}),
     description: input.description.trim(),
     amount: toFiniteAmount(input.amount),
   };
@@ -69,6 +74,7 @@ function updateManualEntry({ repository, entryId, updates }) {
   const normalizedUpdates = {
     ...(updates.month !== undefined ? { month: normalizeMonth(updates.month) } : {}),
     ...(updates.costType !== undefined ? { costType: updates.costType } : {}),
+    ...(updates.accountOrigin !== undefined ? { accountOrigin: updates.accountOrigin } : {}),
     ...(updates.description !== undefined
       ? { description: updates.description }
       : {}),
@@ -80,6 +86,13 @@ function updateManualEntry({ repository, entryId, updates }) {
     !COST_TYPE_VALUES.includes(normalizedUpdates.costType)
   ) {
     throw new Error(`costType must be one of: ${COST_TYPE_VALUES.join(", ")}.`);
+  }
+
+  if (
+    normalizedUpdates.accountOrigin !== undefined &&
+    !ACCOUNT_ORIGIN_VALUES.includes(normalizedUpdates.accountOrigin)
+  ) {
+    throw new Error(`accountOrigin must be one of: ${ACCOUNT_ORIGIN_VALUES.join(", ")}.`);
   }
 
   return repository.updateLaunchEntry(entryId.trim(), normalizedUpdates);
@@ -170,6 +183,7 @@ function normalizeImportedRow({ rowNumber, row, defaults }) {
   const companyId = (row.company_id ?? defaults.companyId ?? "").toString().trim();
   const month = (row.month ?? defaults.month ?? "").toString().trim();
   const costType = (row.cost_type ?? defaults.costType ?? "").toString().trim();
+  const accountOrigin = (row.account_origin ?? defaults.accountOrigin ?? "unknown").toString().trim();
   const description = (row.description ?? "").toString().trim();
   const amountRaw = row.amount ?? "";
 
@@ -206,6 +220,9 @@ function normalizeImportedRow({ rowNumber, row, defaults }) {
   if (costType.length > 0 && !COST_TYPE_VALUES.includes(costType)) {
     errors.push(`cost_type must be one of: ${COST_TYPE_VALUES.join(", ")}`);
   }
+  if (!ACCOUNT_ORIGIN_VALUES.includes(accountOrigin)) {
+    errors.push(`account_origin must be one of: ${ACCOUNT_ORIGIN_VALUES.join(", ")}`);
+  }
 
   if (errors.length > 0) {
     return {
@@ -228,6 +245,7 @@ function normalizeImportedRow({ rowNumber, row, defaults }) {
       companyId,
       month: normalizedMonth,
       costType,
+      accountOrigin,
       description,
       amount: normalizedAmount,
     },

@@ -30,7 +30,8 @@
 }
 
 .settingsToggle,
-.settingsItem {
+.settingsItem,
+.logoutButton {
   border: none;
   background: transparent;
   text-decoration: none;
@@ -74,12 +75,25 @@
   font-weight: 600;
 }
 
+.logoutButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border-radius: var(--radius-button);
+  background: var(--color-surface-soft);
+  color: var(--color-danger, #b91c1c);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .navItem:hover {
   color: var(--color-accent-hover);
 }
 
 .settingsToggle:hover,
-.settingsItem:hover {
+.settingsItem:hover,
+.logoutButton:hover {
   color: var(--color-accent-hover);
 }
 
@@ -197,6 +211,13 @@
     background: transparent;
   }
 
+  .logoutButton {
+    justify-content: flex-start;
+    padding: 10px 20px 10px 34px;
+    color: #fca5a5;
+    background: transparent;
+  }
+
   .syncIndicator {
     display: flex;
     align-items: center;
@@ -213,7 +234,8 @@
   }
 
   .settingsToggle:hover,
-  .settingsItem:hover {
+  .settingsItem:hover,
+  .logoutButton:hover {
     color: var(--color-sidebar-active);
     background-color: rgba(255, 255, 255, 0.06);
   }

@@ -1,5 +1,6 @@
 const MONTH_STATUS_VALUES = ["open", "in_review", "closed"];
 const COST_TYPE_VALUES = ["company", "personal"];
+const ACCOUNT_ORIGIN_VALUES = ["company", "personal", "unknown"];
 
 function assertRequiredString(value, fieldName) {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -44,6 +45,7 @@ function createLaunchEntry({
   companyId,
   month,
   costType,
+  accountOrigin,
   description,
   amount,
   createdAt,
@@ -52,6 +54,9 @@ function createLaunchEntry({
   assertRequiredString(companyId, "launch.companyId");
   assertRequiredString(description, "launch.description");
   assertOneOf(costType, COST_TYPE_VALUES, "launch.costType");
+  if (accountOrigin !== undefined) {
+    assertOneOf(accountOrigin, ACCOUNT_ORIGIN_VALUES, "launch.accountOrigin");
+  }
 
   if (typeof amount !== "number" || Number.isNaN(amount)) {
     throw new Error("launch.amount must be a valid number.");
@@ -62,6 +67,7 @@ function createLaunchEntry({
     companyId: companyId.trim(),
     month: normalizeMonth(month),
     costType,
+    accountOrigin: accountOrigin ?? "unknown",
     description: description.trim(),
     amount,
     createdAt: createdAt ?? new Date().toISOString(),
@@ -100,6 +106,7 @@ function createUserContext({ id, companyIds }) {
 export {
   MONTH_STATUS_VALUES,
   COST_TYPE_VALUES,
+  ACCOUNT_ORIGIN_VALUES,
   normalizeMonth,
   createCompany,
   createLaunchEntry,

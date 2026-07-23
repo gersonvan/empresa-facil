@@ -4,7 +4,7 @@ import { Card, Button, Input } from '../components/ui'
 import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { formatCurrency, getMonthContext } from './financialOverview'
 import { useSearchParams } from 'react-router-dom'
-import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, toggleReviewFlag, updateLaunchEntry } from '../launchStore'
+import { getLaunchEntryById, listLaunchEntries, removeLaunchEntry, toggleReviewFlag, updateLaunchEntry, type AccountOrigin } from '../launchStore'
 import { getAttachment, hasAttachment, removeAttachment, saveAttachment } from '../attachmentStore'
 import { monthLifecycleStore } from '../monthLifecycle'
 import { saveCommitment, type CommitmentCostType, type CommitmentType } from '../commitmentStore'
@@ -37,6 +37,7 @@ interface CommitmentModalState {
 interface EditState {
   entryId: string
   costType: CostType
+  accountOrigin: AccountOrigin
   dreGroup: DreGroup
   categoryId: string
   description: string
@@ -51,6 +52,12 @@ function monthFromNow() {
 
 function costTypeLabel(costType: 'company' | 'personal') {
   return costType === 'company' ? 'Empresa' : 'Pessoal'
+}
+
+function accountOriginLabel(accountOrigin: AccountOrigin) {
+  if (accountOrigin === 'company') return 'Conta da empresa'
+  if (accountOrigin === 'personal') return 'Conta pessoal'
+  return 'Conta não informada'
 }
 
 function dreGroupLabel(dreGroup: DreGroup) {
@@ -94,7 +101,10 @@ export default function Records() {
   const monthContext = getMonthContext()
   const [searchParams] = useSearchParams()
   const [monthFilter, setMonthFilter] = useState(() => searchParams.get('mes') ?? monthFromNow())
-  const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>('all')
+  const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>(() => {
+    const type = searchParams.get('tipo')
+    return type === 'company' || type === 'personal' ? type : 'all'
+  })
   const [dreGroupFilter, setDreGroupFilter] = useState<DreGroupFilter>('all')
   const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get('categoria') ?? '')
   const [searchText, setSearchText] = useState('')
@@ -221,11 +231,12 @@ export default function Records() {
       search: searchText || undefined,
       flaggedForReview: onlyFlagged ? true : undefined,
     })
-    const header = 'mes,data_criacao,tipo,natureza,categoria,descricao,valor,revisar'
+    const header = 'mes,data_criacao,tipo,conta_usada,natureza,categoria,descricao,valor,revisar'
     const rows = allEntries.map((entry) => [
       entry.month,
       entry.createdAt.slice(0, 10),
       entry.costType === 'company' ? 'Empresa' : 'Pessoal',
+      accountOriginLabel(entry.accountOrigin),
       dreGroupLabel(entry.dreGroup),
       entry.categoryName,
       `"${entry.description.replace(/"/g, '""')}"`,
@@ -257,6 +268,7 @@ export default function Records() {
     setEditState({
       entryId: entry.id,
       costType: entry.costType,
+      accountOrigin: entry.accountOrigin,
       dreGroup: entry.dreGroup,
       categoryId: entry.categoryId,
       description: entry.description,
@@ -297,6 +309,7 @@ export default function Records() {
 
     updateLaunchEntry(editState.entryId, {
       costType: editState.costType,
+      accountOrigin: editState.accountOrigin,
       dreGroup: editState.dreGroup,
       categoryId: category.id,
       categoryName: category.name,
@@ -561,6 +574,22 @@ export default function Records() {
                   <option value="expenses">Despesa</option>
                 </select>
               </label>
+              <label className={styles.field} htmlFor="edit-account-origin">
+                <span>Conta usada</span>
+                <select
+                  id="edit-account-origin"
+                  value={editState.accountOrigin}
+                  onChange={(event) =>
+                    setEditState((current) =>
+                      current ? { ...current, accountOrigin: event.target.value as AccountOrigin } : current
+                    )
+                  }
+                >
+                  <option value="company">Conta da empresa</option>
+                  <option value="personal">Conta pessoal</option>
+                  <option value="unknown">Não informada</option>
+                </select>
+              </label>
               <label className={styles.field} htmlFor="edit-category">
                 <span>Categoria</span>
                 <select
@@ -640,7 +669,7 @@ export default function Records() {
                       {attached && <span className={styles.attachBadge}>📎</span>}
                     </p>
                     <p className={styles.rowMeta}>
-                      {costTypeLabel(entry.costType)} · {dreGroupLabel(entry.dreGroup)} · {entry.categoryName} · {entry.month}
+                      {costTypeLabel(entry.costType)} · {accountOriginLabel(entry.accountOrigin)} · {dreGroupLabel(entry.dreGroup)} · {entry.categoryName} · {entry.month}
                     </p>
                   </div>
                   <div className={styles.rowTail}>

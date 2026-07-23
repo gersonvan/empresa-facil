@@ -91,7 +91,7 @@ function run() {
   const monthState = repo.getMonthStatus(alpha.id, "2026-05");
   assert.equal(monthState?.status, "closed", "month state should persist without login dependency");
 
-  assert.equal(DATA_CONTRACT.version, "1.0.0");
+  assert.equal(DATA_CONTRACT.version, "1.1.0");
   assert.equal(Array.isArray(DRE_GROUP_VALUES), true);
   assert.equal(typeof CALCULATION_INPUT_CONTRACT.fiscalRule.version, "string");
   assert.equal(CALCULATION_CONTRACT.version, "1.0.0");
@@ -107,6 +107,7 @@ function run() {
     amount: 199.9,
     description: "Software subscription",
     source_id: "ln-001",
+    account_origin: "unknown",
   });
 
   const calcRecord = toCalculationRecord(entryA);

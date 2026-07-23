@@ -5,7 +5,7 @@ import { API_URL } from '../config'
 import styles from './AuthCallback.module.css'
 
 const ERROR_MESSAGES: Record<string, string> = {
-  oauth_failed: 'Falha na autenticação com o provedor. Tente novamente.',
+  oauth_failed: 'Não foi possível concluir a entrada com o provedor. Tente novamente ou use o link por e-mail.',
   token_missing: 'Link de acesso inválido.',
   token_invalido: 'Link expirado ou já utilizado. Solicite um novo.',
   token_ausente: 'Link de acesso inválido.',
@@ -15,10 +15,10 @@ export default function AuthCallback() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const errorCode = searchParams.get('error')
 
   useEffect(() => {
     const token = searchParams.get('token')
-    const errorCode = searchParams.get('error')
 
     if (token) {
       setAuthToken(token)
@@ -60,6 +60,7 @@ export default function AuthCallback() {
           <div className={styles.errorIcon}>✕</div>
           <h1 className={styles.title}>Falha ao entrar</h1>
           <p className={styles.desc}>{error}</p>
+          <p className={styles.desc}>Se o problema continuar, informe ao suporte o código: {errorCode}.</p>
           <a href="/login" className={styles.backLink}>Voltar para o login</a>
         </div>
       </div>

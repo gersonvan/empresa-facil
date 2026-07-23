@@ -17,6 +17,7 @@ import styles from './ImportOFX.module.css'
 interface ImportRow extends OFXTransaction {
   selected: boolean
   costType: 'company' | 'personal'
+  accountOrigin: 'company' | 'personal' | 'unknown'
   description: string
   isDuplicate: boolean
   categoryId: string
@@ -27,7 +28,7 @@ interface ImportRow extends OFXTransaction {
 }
 
 const NEW_PROFILE: Omit<ImportProfile, 'id' | 'companyId' | 'createdAt' | 'updatedAt' | 'builtIn'> = {
-  name: '', accountName: '', format: 'csv', delimiter: ';', skipLines: 1, dateFormat: 'DD/MM/YYYY',
+  name: '', accountName: '', accountOrigin: 'company', format: 'csv', delimiter: ';', skipLines: 1, dateFormat: 'DD/MM/YYYY',
   dateColumn: 0, descriptionColumn: 1, amountColumn: 2, invertAmount: false,
 }
 
@@ -84,12 +85,18 @@ export default function ImportOFX() {
     return { categoryId: '', categoryName: 'Sem categoria', dreGroup: transaction.type === 'Entrada' ? 'revenue' as const : 'expenses' as const, suggestionSource: 'none' as const }
   }
 
-  function rowFromTransaction(transaction: OFXTransaction, duplicates: Set<string>, reconciliationReasons: Map<string, string>): ImportRow {
+  function rowFromTransaction(
+    transaction: OFXTransaction,
+    duplicates: Set<string>,
+    reconciliationReasons: Map<string, string>,
+    accountOrigin: ImportRow['accountOrigin']
+  ): ImportRow {
     const costType = 'company'
     return {
       ...transaction,
       selected: true,
       costType,
+      accountOrigin,
       description: transaction.description,
       isDuplicate: duplicates.has(buildDuplicateKey(transaction.month, transaction.description, transaction.amount)),
       reconciliationReason: reconciliationReasons.get(transaction.id),
@@ -111,7 +118,8 @@ export default function ImportOFX() {
       }
       const duplicates = buildDuplicateSet()
       const reconciliationReasons = new Map(findPossibleInternalTransfers(transactions).map((item) => [item.transactionId, item.reason]))
-      setRows(transactions.map((transaction) => rowFromTransaction(transaction, duplicates, reconciliationReasons)))
+      const accountOrigin = profile.accountOrigin === 'personal' ? 'personal' : profile.accountOrigin === 'unknown' ? 'unknown' : 'company'
+      setRows(transactions.map((transaction) => rowFromTransaction(transaction, duplicates, reconciliationReasons, accountOrigin)))
     } catch {
       setParseError('Não foi possível processar o arquivo. Revise o perfil de importação e tente novamente.')
     }
@@ -191,6 +199,7 @@ export default function ImportOFX() {
         companyId: monthContext.companyId,
         month: row.month,
         costType: row.costType,
+        accountOrigin: row.accountOrigin,
         dreGroup: row.dreGroup,
         categoryId: row.categoryId,
         categoryName: row.categoryName,
@@ -241,6 +250,7 @@ export default function ImportOFX() {
       {showProfileForm ? <div className={styles.profileForm}>
         <input placeholder="Nome do perfil (ex.: Itaú PJ CSV)" value={newProfile.name} onChange={(event) => setNewProfile({ ...newProfile, name: event.target.value })} />
         <input placeholder="Conta exibida no perfil" value={newProfile.accountName} onChange={(event) => setNewProfile({ ...newProfile, accountName: event.target.value })} />
+        <label>Conta do extrato<select value={newProfile.accountOrigin} onChange={(event) => setNewProfile({ ...newProfile, accountOrigin: event.target.value as ImportProfile['accountOrigin'] })}><option value="company">Conta da empresa</option><option value="personal">Conta pessoal</option><option value="unknown">Não sei</option></select></label>
         <label>Separador<select value={newProfile.delimiter} onChange={(event) => setNewProfile({ ...newProfile, delimiter: event.target.value as ImportProfile['delimiter'] })}><option value=";">Ponto e vírgula (;)</option><option value=",">Vírgula (,)</option><option value="\t">Tabulação</option></select></label>
         <label>Data<select value={newProfile.dateFormat} onChange={(event) => setNewProfile({ ...newProfile, dateFormat: event.target.value as ImportProfile['dateFormat'] })}><option value="DD/MM/YYYY">DD/MM/AAAA</option><option value="YYYY-MM-DD">AAAA-MM-DD</option><option value="MM/DD/YYYY">MM/DD/AAAA</option></select></label>
         <label>Pular linhas<input type="number" min="0" value={newProfile.skipLines} onChange={(event) => setNewProfile({ ...newProfile, skipLines: Number(event.target.value) })} /></label>

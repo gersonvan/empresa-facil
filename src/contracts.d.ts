@@ -5,6 +5,7 @@ export interface IngestionRecord {
   company_id: string
   month: string
   cost_type: 'company' | 'personal'
+  account_origin?: 'company' | 'personal' | 'unknown'
   amount: number
   description: string
   source_id: string

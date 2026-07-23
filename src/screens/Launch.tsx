@@ -5,7 +5,7 @@ import { createLaunchEntry } from '../domain'
 import { toIngestionRecord } from '../contracts'
 import { listCategories, type CostType, type DreGroup } from '../categoryStore'
 import { monthLifecycleStore } from '../monthLifecycle'
-import { listLaunchEntries, saveLaunchEntry } from '../launchStore'
+import { listLaunchEntries, saveLaunchEntry, type AccountOrigin } from '../launchStore'
 import { saveRecurringTemplate } from '../recurringStore'
 import { Button, Card, Input } from '../components/ui'
 import { getMonthContext } from './financialOverview'
@@ -13,6 +13,7 @@ import styles from './Launch.module.css'
 
 interface LaunchFormState {
   costType: CostType
+  accountOrigin: AccountOrigin
   dreGroup: DreGroup
   categoryId: string
   description: string
@@ -23,20 +24,7 @@ interface LaunchFormState {
 
 interface ValidationErrors {
   categoryId?: string
-  description?: string
   amount?: string
-}
-
-function dreGroupLabel(dreGroup: DreGroup) {
-  if (dreGroup === 'revenue') {
-    return 'Receita'
-  }
-
-  if (dreGroup === 'deductions') {
-    return 'Dedução'
-  }
-
-  return 'Despesa'
 }
 
 function monthFromNow() {
@@ -77,6 +65,7 @@ export default function Launch() {
 
   const [form, setForm] = useState<LaunchFormState>({
     costType: initialIntent,
+    accountOrigin: initialIntent,
     dreGroup: 'expenses',
     categoryId: '',
     description: '',
@@ -115,10 +104,6 @@ export default function Launch() {
       validationErrors.categoryId = 'Escolha uma categoria para classificar o lançamento.'
     }
 
-    if (!nextState.description.trim()) {
-      validationErrors.description = 'Informe uma descrição curta.'
-    }
-
     const parsedAmount = parseBrazilianAmount(nextState.amount)
     if (!nextState.amount.trim() || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
       validationErrors.amount = 'Informe um valor maior que zero.'
@@ -153,7 +138,8 @@ export default function Launch() {
       companyId: monthContext.companyId,
       month: currentMonth,
       costType: form.costType,
-      description: form.description,
+      accountOrigin: form.accountOrigin,
+      description: form.description.trim() || selectedCategory.name,
       amount: parseBrazilianAmount(form.amount),
     })
 
@@ -162,6 +148,7 @@ export default function Launch() {
     saveLaunchEntry({
       ...entry,
       dreGroup: form.dreGroup,
+      accountOrigin: form.accountOrigin,
       categoryId: selectedCategory.id,
       categoryName: selectedCategory.name,
       createdAt: new Date().toISOString(),
@@ -172,10 +159,11 @@ export default function Launch() {
         id: `rec-${entryId}`,
         companyId: monthContext.companyId,
         costType: form.costType,
+        accountOrigin: form.accountOrigin,
         dreGroup: form.dreGroup,
         categoryId: selectedCategory.id,
         categoryName: selectedCategory.name,
-        description: form.description,
+        description: form.description.trim() || selectedCategory.name,
         amount: parseBrazilianAmount(form.amount),
         createdAt: new Date().toISOString(),
       })
@@ -199,6 +187,7 @@ export default function Launch() {
     setForm((prevState) => ({
       ...prevState,
       costType: nextCostType,
+      accountOrigin: prevState.accountOrigin === prevState.costType ? nextCostType : prevState.accountOrigin,
       categoryId: '',
       dreGroup: nextCostType === 'personal' && prevState.dreGroup === 'deductions' ? 'expenses' : prevState.dreGroup,
     }))
@@ -212,64 +201,84 @@ export default function Launch() {
     }))
   }
 
+  const isPersonal = form.costType === 'personal'
+  const isMoneyIn = form.dreGroup === 'revenue'
+  const saveLabel = isPersonal
+    ? isMoneyIn
+      ? 'Salvar entrada pessoal'
+      : 'Salvar gasto pessoal'
+    : isMoneyIn
+      ? 'Salvar entrada da empresa'
+      : form.dreGroup === 'deductions'
+        ? 'Salvar ajuste fiscal'
+        : 'Salvar gasto da empresa'
+
   return (
-    <ScreenContainer title="Lançar">
+    <ScreenContainer title={isPersonal ? 'Registrar movimento pessoal' : 'Registrar movimento da empresa'}>
       <Card className={styles.formCard}>
         <form className={styles.formGrid} onSubmit={submitForm}>
           <section className={styles.step} aria-label="Passo 1 de 3">
-            <h2 className={styles.stepTitle}>1. Para quem é este lançamento?</h2>
-            <p className={styles.stepHint}>Escolha apenas uma intenção para manter o cadastro rápido.</p>
+            <h2 className={styles.stepTitle}>1. Este dinheiro é de quem?</h2>
+            <p className={styles.stepHint}>Escolha o contexto. Ele define as categorias e o que aparece nos seus relatórios.</p>
             <div className={styles.intentOptions} role="group" aria-label="Tipo de lançamento">
               <button
                 type="button"
-                className={`${styles.intentButton} ${form.costType === 'company' ? styles.intentActive : ''}`}
+                className={`${styles.intentButton} ${styles.companyIntent} ${form.costType === 'company' ? styles.intentActive : ''}`}
                 onClick={() => updateCostType('company')}
                 aria-pressed={form.costType === 'company'}
               >
-                Empresa
+                <span aria-hidden="true">🏢</span>
+                <span><strong>Empresa</strong><small>Afeta o resultado do negócio</small></span>
               </button>
               <button
                 type="button"
-                className={`${styles.intentButton} ${form.costType === 'personal' ? styles.intentActive : ''}`}
+                className={`${styles.intentButton} ${styles.personalIntent} ${form.costType === 'personal' ? styles.intentActive : ''}`}
                 onClick={() => updateCostType('personal')}
                 aria-pressed={form.costType === 'personal'}
               >
-                Pessoal
+                <span aria-hidden="true">👤</span>
+                <span><strong>Pessoal</strong><small>Fica separado da empresa</small></span>
               </button>
             </div>
           </section>
 
           <section className={styles.step} aria-label="Passo 2 de 3">
-            <h2 className={styles.stepTitle}>2. Natureza, categoria e valor</h2>
+            <h2 className={styles.stepTitle}>2. O dinheiro entrou ou saiu?</h2>
             <div className={styles.fields}>
-              <div className={styles.intentOptions} role="group" aria-label="Natureza DRE">
+              <div className={styles.intentOptions} role="group" aria-label="Tipo de movimentação">
                 <button
                   type="button"
                   className={`${styles.intentButton} ${form.dreGroup === 'revenue' ? styles.intentActive : ''}`}
                   onClick={() => updateDreGroup('revenue')}
                   aria-pressed={form.dreGroup === 'revenue'}
                 >
-                  Receita
+                  Entrou dinheiro
                 </button>
-                {form.costType === 'company' && (
-                  <button
-                    type="button"
-                    className={`${styles.intentButton} ${form.dreGroup === 'deductions' ? styles.intentActive : ''}`}
-                    onClick={() => updateDreGroup('deductions')}
-                    aria-pressed={form.dreGroup === 'deductions'}
-                  >
-                    Abatimento fiscal
-                  </button>
-                )}
                 <button
                   type="button"
                   className={`${styles.intentButton} ${form.dreGroup === 'expenses' ? styles.intentActive : ''}`}
                   onClick={() => updateDreGroup('expenses')}
                   aria-pressed={form.dreGroup === 'expenses'}
                 >
-                  Despesa
+                  Saiu dinheiro
                 </button>
               </div>
+
+              <label className={styles.selectField} htmlFor="launch-account-origin">
+                <span>Qual conta {isMoneyIn ? 'recebeu' : 'pagou'}?</span>
+                <select
+                  id="launch-account-origin"
+                  value={form.accountOrigin}
+                  onChange={(event) =>
+                    setForm((prevState) => ({ ...prevState, accountOrigin: event.target.value as AccountOrigin }))
+                  }
+                >
+                  <option value="company">Conta da empresa</option>
+                  <option value="personal">Conta pessoal</option>
+                  <option value="unknown">Não sei agora</option>
+                </select>
+                <small className={styles.accountOriginHint}>Ajuda a identificar quando dinheiro pessoal e da empresa se misturam.</small>
+              </label>
 
               <label className={styles.selectField} htmlFor="launch-category">
                 <span>Categoria</span>
@@ -295,11 +304,11 @@ export default function Launch() {
                   placeholder={
                     form.dreGroup === 'revenue'
                       ? 'Ex.: venda balcão'
-                      : form.dreGroup === 'deductions'
-                        ? 'Ex.: desconto incondicional concedido'
+                      : isPersonal
+                        ? 'Ex.: mercado ou gasolina'
                         : 'Ex.: aluguel do escritório'
                   }
-                  helperText="Use um nome curto e direto."
+                  helperText="Opcional. Se deixar em branco, usaremos a categoria escolhida."
                   value={form.description}
                   onChange={(event) => {
                     setForm((prevState) => ({ ...prevState, description: event.target.value }))
@@ -307,7 +316,6 @@ export default function Launch() {
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                  errorText={errors.description}
                 />
                 {showSuggestions && descriptionSuggestions.length > 0 && (
                   <ul className={styles.suggestions} role="listbox">
@@ -361,7 +369,7 @@ export default function Launch() {
                 </span>
               </label>
               <details className={styles.optionalDetails}>
-                <summary className={styles.optionalSummary}>Campos opcionais (deixar para depois)</summary>
+                <summary className={styles.optionalSummary}>Adicionar detalhes (opcional)</summary>
                 <div className={styles.optionalContent}>
                   <Input
                     label="Observação"
@@ -369,6 +377,17 @@ export default function Launch() {
                     value={form.notes}
                     onChange={(event) => setForm((prevState) => ({ ...prevState, notes: event.target.value }))}
                   />
+                  {!isPersonal && (
+                    <button
+                      type="button"
+                      className={`${styles.fiscalOption} ${form.dreGroup === 'deductions' ? styles.fiscalOptionActive : ''}`}
+                      onClick={() => updateDreGroup('deductions')}
+                      aria-pressed={form.dreGroup === 'deductions'}
+                    >
+                      <strong>Registrar abatimento fiscal</strong>
+                      <span>Use apenas para descontos que reduzem a receita bruta.</span>
+                    </button>
+                  )}
                 </div>
               </details>
             </div>
@@ -376,15 +395,12 @@ export default function Launch() {
 
           <section className={styles.step} aria-label="Passo 3 de 3">
             <h2 className={styles.stepTitle}>3. Confirmar e salvar</h2>
-            <p className={styles.stepHint}>
-              Empresa ativa: <strong>{monthContext.companyName}</strong> · Mês: <strong>{currentMonth}</strong>
-            </p>
-            <p className={styles.stepHint}>
-              Natureza selecionada: <strong>{dreGroupLabel(form.dreGroup)}</strong>. No Simples Nacional, deduções reduzem
-              a base de cálculo da receita bruta e devem ser registradas separadamente de despesas.
-            </p>
+            <p className={styles.stepHint}>{isPersonal ? 'Movimento pessoal · não entra no resultado da empresa.' : <>Para: <strong>{monthContext.companyName}</strong> · Mês: <strong>{currentMonth}</strong></>}</p>
+            {form.dreGroup === 'deductions' && !isPersonal ? (
+              <p className={styles.stepHint}>Ajuste fiscal selecionado. No Simples Nacional, ele reduz a receita bruta e não deve ser usado para despesas comuns.</p>
+            ) : null}
             <Button type="submit" variant="primary" fullWidth>
-              Salvar lançamento
+              {saveLabel}
             </Button>
             {savedEntryId ? (
               <p className={styles.successMessage} role="status">

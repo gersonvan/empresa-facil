@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import styles from './NavBar.module.css'
 import { useSyncStatus } from '../hooks/useSyncStatus'
-import { isAuthenticated } from '../authStore'
+import { clearAuthToken, isAuthenticated } from '../authStore'
 import { EFSymbol, EFWordmark } from './EFLogo'
 
 const SYNC_LABELS: Record<string, string> = {
@@ -38,6 +38,7 @@ const settingsItems = [
 export default function NavBar() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const syncStatus = useSyncStatus()
   const showSync = isAuthenticated()
 
@@ -47,6 +48,12 @@ export default function NavBar() {
   )
 
   const shouldShowSettings = settingsOpen || isSettingsRouteActive
+
+  function handleLogout() {
+    clearAuthToken()
+    setSettingsOpen(false)
+    navigate('/login', { replace: true })
+  }
 
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
@@ -104,6 +111,9 @@ export default function NavBar() {
               {label}
             </NavLink>
           ))}
+          <button type="button" className={styles.logoutButton} onClick={handleLogout}>
+            Sair
+          </button>
         </div>
       ) : null}
     </nav>

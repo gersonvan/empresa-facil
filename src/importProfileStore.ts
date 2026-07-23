@@ -5,6 +5,7 @@ export interface ImportProfile {
   companyId: string
   name: string
   accountName: string
+  accountOrigin?: 'company' | 'personal' | 'unknown'
   format: ImportFormat
   delimiter: ',' | ';' | '\t'
   skipLines: number
@@ -46,7 +47,7 @@ function newId() {
 function defaultProfile(companyId: string, id = 'builtin-ofx', name = 'Extrato OFX', accountName = 'Conta bancária'): ImportProfile {
   const now = new Date().toISOString()
   return {
-    id, companyId, name, accountName, format: 'ofx',
+    id, companyId, name, accountName, accountOrigin: 'company', format: 'ofx',
     delimiter: ',', skipLines: 0, dateFormat: 'DD/MM/YYYY', dateColumn: 0, descriptionColumn: 1,
     amountColumn: 2, invertAmount: false, builtIn: true, createdAt: now, updatedAt: now,
   }

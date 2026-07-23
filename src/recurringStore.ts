@@ -1,4 +1,5 @@
 import type { DreGroup } from './categoryStore'
+import type { AccountOrigin } from './launchStore'
 
 const STORAGE_KEY = 'empresa-facil:recurring-templates:v1'
 
@@ -6,6 +7,7 @@ export interface RecurringTemplate {
   id: string
   companyId: string
   costType: 'company' | 'personal'
+  accountOrigin?: AccountOrigin
   dreGroup: DreGroup
   categoryId: string
   categoryName: string

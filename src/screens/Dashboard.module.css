@@ -73,6 +73,64 @@
   color: var(--color-text-primary);
 }
 
+.personalSeparationCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 55%, var(--color-surface));
+}
+
+.personalSeparationTitle,
+.personalSeparationText {
+  margin: 0;
+}
+
+.mixedAccountsCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+  background: var(--color-warning-soft);
+}
+
+.mixedAccountsTitle,
+.mixedAccountsText,
+.mixedAccountsNote {
+  margin: 0;
+}
+
+.mixedAccountsTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.mixedAccountsText,
+.mixedAccountsNote {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.mixedAccountsText { margin-top: 3px; }
+.mixedAccountsNote { margin-top: 5px; }
+
+.personalSeparationTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.personalSeparationText {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
 .positive .indicatorValue {
   color: var(--color-positive);
 }

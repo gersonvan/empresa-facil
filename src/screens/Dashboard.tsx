@@ -29,7 +29,7 @@ export default function Dashboard() {
   const topCategoryExpenses = listLaunchEntries({
     companyId: monthContext.companyId,
     month: monthContext.month,
-    costType: 'all',
+    costType: 'company',
   })
     .filter((entry) => entry.dreGroup === 'expenses')
     .reduce<Map<string, { categoryId: string; amount: number }>>((accumulator, entry) => {
@@ -38,7 +38,18 @@ export default function Dashboard() {
       return accumulator
     }, new Map())
 
-  const totalEntries = listLaunchEntries({ companyId: monthContext.companyId, month, costType: 'all' }).length
+  const monthEntries = listLaunchEntries({ companyId: monthContext.companyId, month, costType: 'all' })
+  const totalEntries = monthEntries.length
+  const personalEntries = monthEntries.filter((entry) => entry.costType === 'personal')
+  const personalExpenses = personalEntries
+    .filter((entry) => entry.dreGroup === 'expenses')
+    .reduce((total, entry) => total + entry.amount, 0)
+  const personalPaidFromCompany = monthEntries
+    .filter((entry) => entry.costType === 'personal' && entry.accountOrigin === 'company' && entry.dreGroup === 'expenses')
+    .reduce((total, entry) => total + entry.amount, 0)
+  const companyPaidFromPersonal = monthEntries
+    .filter((entry) => entry.costType === 'company' && entry.accountOrigin === 'personal' && entry.dreGroup === 'expenses')
+    .reduce((total, entry) => total + entry.amount, 0)
 
   const [recurringApplied, setRecurringApplied] = useState(false)
 
@@ -56,6 +67,7 @@ export default function Dashboard() {
         companyId: t.companyId,
         month,
         costType: t.costType,
+        accountOrigin: t.accountOrigin ?? 'unknown',
         dreGroup: t.dreGroup,
         categoryId: t.categoryId,
         categoryName: t.categoryName,
@@ -194,6 +206,39 @@ export default function Dashboard() {
               </Card>
             ))}
           </div>
+
+          {personalEntries.length > 0 && (
+            <Card className={styles.personalSeparationCard} padding="compact">
+              <div>
+                <p className={styles.personalSeparationTitle}>Movimentações pessoais separadas</p>
+                <p className={styles.personalSeparationText}>
+                  {personalExpenses > 0
+                    ? `${formatCurrency(personalExpenses)} em despesas pessoais neste mês não reduz o resultado da empresa.`
+                    : 'Há movimentações pessoais neste mês. Elas não entram no resultado da empresa.'}
+                </p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navigate(`/records?mes=${month}&tipo=personal`)}>
+                Ver pessoal
+              </Button>
+            </Card>
+          )}
+
+          {(personalPaidFromCompany > 0 || companyPaidFromPersonal > 0) && (
+            <Card className={styles.mixedAccountsCard} padding="compact">
+              <div>
+                <p className={styles.mixedAccountsTitle}>Contas misturadas detectadas</p>
+                <p className={styles.mixedAccountsText}>
+                  {personalPaidFromCompany > 0 && `${formatCurrency(personalPaidFromCompany)} em gastos pessoais saíram da conta da empresa.`}
+                  {personalPaidFromCompany > 0 && companyPaidFromPersonal > 0 && ' '}
+                  {companyPaidFromPersonal > 0 && `${formatCurrency(companyPaidFromPersonal)} em gastos da empresa foram pagos por conta pessoal.`}
+                </p>
+                <p className={styles.mixedAccountsNote}>O resultado empresarial continua separado; este alerta mostra o impacto para organizar o caixa e conversar com o contador.</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navigate(`/records?mes=${month}`)}>
+                Conferir
+              </Button>
+            </Card>
+          )}
 
           <Card className={styles.categoryCard}>
             <div className={styles.categoryHeader}>

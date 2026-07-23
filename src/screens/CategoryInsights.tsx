@@ -30,7 +30,7 @@ function monthFromNow() {
 export default function CategoryInsights() {
   const monthContext = getMonthContext()
   const [monthFilter, setMonthFilter] = useState(monthFromNow())
-  const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>('all')
+  const [costTypeFilter, setCostTypeFilter] = useState<CostTypeFilter>('company')
   const [chartScope, setChartScope] = useState<ChartScope>('expenses')
 
   const entries = useMemo(
@@ -52,51 +52,71 @@ export default function CategoryInsights() {
       totalsByCategory.set(key, current + entry.amount)
     })
 
-    const total = Array.from(totalsByCategory.values()).reduce((acc, value) => acc + value, 0)
-
     return Array.from(totalsByCategory.entries())
       .map(([key, amount]) => {
         const [categoryName, dreGroup] = key.split('::')
-        const share = total > 0 ? (amount / total) * 100 : null
         return {
           categoryName,
           dreGroup: dreGroup as DreGroup,
           amount,
-          share,
         }
       })
       .sort((left, right) => right.amount - left.amount)
   }, [entries])
 
+  const rankingWithShare = useMemo(() => {
+    const totalByGroup = new Map<DreGroup, number>()
+
+    categoryRanking.forEach((item) => {
+      totalByGroup.set(item.dreGroup, (totalByGroup.get(item.dreGroup) ?? 0) + item.amount)
+    })
+
+    return categoryRanking.map((item) => {
+      const total = totalByGroup.get(item.dreGroup) ?? 0
+      return { ...item, share: total > 0 ? (item.amount / total) * 100 : null }
+    })
+  }, [categoryRanking])
+
   const expensesRanking = useMemo(
-    () => categoryRanking.filter((item) => item.dreGroup === 'expenses').slice(0, 5),
-    [categoryRanking]
+    () => rankingWithShare.filter((item) => item.dreGroup === 'expenses').slice(0, 5),
+    [rankingWithShare]
   )
 
   const revenueRanking = useMemo(
-    () => categoryRanking.filter((item) => item.dreGroup === 'revenue').slice(0, 5),
-    [categoryRanking]
+    () => rankingWithShare.filter((item) => item.dreGroup === 'revenue').slice(0, 5),
+    [rankingWithShare]
   )
 
   const deductionsRanking = useMemo(
-    () => categoryRanking.filter((item) => item.dreGroup === 'deductions').slice(0, 5),
-    [categoryRanking]
+    () => rankingWithShare.filter((item) => item.dreGroup === 'deductions').slice(0, 5),
+    [rankingWithShare]
   )
 
   const chartRanking = useMemo(() => {
     if (chartScope === 'all') {
-      return categoryRanking.slice(0, 8)
+      const total = categoryRanking.reduce((accumulator, item) => accumulator + item.amount, 0)
+      return categoryRanking
+        .map((item) => ({ ...item, share: total > 0 ? (item.amount / total) * 100 : null }))
+        .slice(0, 8)
     }
 
-    return categoryRanking.filter((item) => item.dreGroup === chartScope).slice(0, 8)
-  }, [categoryRanking, chartScope])
+    return rankingWithShare.filter((item) => item.dreGroup === chartScope).slice(0, 8)
+  }, [categoryRanking, chartScope, rankingWithShare])
 
   const chartMaxAmount = useMemo(
     () => chartRanking.reduce((accumulator, item) => Math.max(accumulator, item.amount), 0),
     [chartRanking]
   )
 
-  const totalInFilter = useMemo(() => entries.reduce((acc, entry) => acc + entry.amount, 0), [entries])
+  const entriesInChartScope = useMemo(
+    () => entries.filter((entry) => chartScope === 'all' || entry.dreGroup === chartScope),
+    [chartScope, entries]
+  )
+
+  const totalInFilter = useMemo(
+    () => entriesInChartScope.reduce((acc, entry) => acc + entry.amount, 0),
+    [entriesInChartScope]
+  )
 
   return (
     <ScreenContainer title="Análise por Categoria">
@@ -119,9 +139,9 @@ export default function CategoryInsights() {
               value={costTypeFilter}
               onChange={(event) => setCostTypeFilter(event.target.value as CostTypeFilter)}
             >
-              <option value="all">Todos</option>
-              <option value="company">Empresa</option>
+              <option value="company">Empresa (padrão)</option>
               <option value="personal">Pessoal</option>
+              <option value="all">Todos</option>
             </select>
           </label>
           <label className={styles.field} htmlFor="insights-chart-scope">
@@ -147,7 +167,7 @@ export default function CategoryInsights() {
         </Card>
         <Card>
           <p className={styles.kpiLabel}>Categorias ativas</p>
-          <strong className={styles.kpiValue}>{categoryRanking.length}</strong>
+          <strong className={styles.kpiValue}>{chartRanking.length}</strong>
         </Card>
       </div>
 

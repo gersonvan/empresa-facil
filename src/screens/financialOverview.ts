@@ -126,7 +126,11 @@ export function getMonthlyOverview(selectedMonth?: string): MonthlyOverview {
   const calculation = calculateVersionedSimplesSupport({
     companyId: monthContext.companyId,
     month: monthContext.month,
-    lines: listLaunchLines({ companyId: monthContext.companyId, month: monthContext.month }),
+    lines: listLaunchLines({
+      companyId: monthContext.companyId,
+      month: monthContext.month,
+      costType: 'company',
+    }),
     ruleCatalog: fiscalRuleCatalog,
     ruleVersion,
     monthLifecycle: lifecycleSnapshot,

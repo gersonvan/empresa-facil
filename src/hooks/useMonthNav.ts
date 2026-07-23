@@ -23,6 +23,24 @@ export function monthLabel(month: string): string {
 
 const SYNC_KEY = 'empresa-facil:active-month'
 
+function getSyncedMonth() {
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage.getItem(SYNC_KEY)
+  } catch {
+    return null
+  }
+}
+
+function saveSyncedMonth(month: string) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SYNC_KEY, month)
+    }
+  } catch {
+    // A navegação continua funcionando mesmo quando o armazenamento não está disponível.
+  }
+}
+
 export interface MonthNavOptions {
   /** Mês inicial no formato "YYYY-MM". Padrão: mês atual. */
   initialMonth?: string
@@ -44,7 +62,7 @@ export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
   const { initialMonth, oldestAllowedMonth, sync } = opts
 
   const [month, setMonth] = useState<string>(() => {
-    const synced = sync ? localStorage.getItem(SYNC_KEY) : null
+    const synced = sync ? getSyncedMonth() : null
     const start = synced ?? initialMonth ?? currentMonth()
     if (oldestAllowedMonth && start < oldestAllowedMonth) return oldestAllowedMonth
     return start
@@ -55,7 +73,7 @@ export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
   const isAtOldest = oldestAllowedMonth !== undefined && month <= oldestAllowedMonth
 
   function updateMonth(next: string) {
-    if (sync) localStorage.setItem(SYNC_KEY, next)
+    if (sync) saveSyncedMonth(next)
     setMonth(next)
   }
 
@@ -63,7 +81,7 @@ export function useMonthNav(initialMonthOrOptions?: string | MonthNavOptions) {
     setMonth((m) => {
       const candidate = shiftMonth(m, -1)
       if (oldestAllowedMonth && candidate < oldestAllowedMonth) return m
-      if (sync) localStorage.setItem(SYNC_KEY, candidate)
+      if (sync) saveSyncedMonth(candidate)
       return candidate
     })
   }

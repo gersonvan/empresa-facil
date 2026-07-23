@@ -8,7 +8,7 @@ const DRE_GROUP_VALUES = [
 ];
 
 const DATA_CONTRACT = {
-  version: "1.0.0",
+  version: "1.1.0",
   entities: {
     company: {
       id: "string",
@@ -20,6 +20,7 @@ const DATA_CONTRACT = {
       companyId: "string",
       month: "YYYY-MM",
       costType: COST_TYPE_VALUES,
+      accountOrigin: "company | personal | unknown (optional)",
       description: "string",
       amount: "number",
       createdAt: "ISO-8601 string",
@@ -66,6 +67,7 @@ function toIngestionRecord(entry) {
     amount: entry.amount,
     description: entry.description,
     source_id: entry.id,
+    ...(entry.accountOrigin !== undefined ? { account_origin: entry.accountOrigin } : {}),
   };
 }
 
