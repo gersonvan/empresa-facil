@@ -3,6 +3,12 @@ import { requireAuth } from '../authMiddleware.js'
 async function authRoutes(fastify) {
   const { userStore, membershipStore, magicLinkStore, emailService, config } = fastify
 
+  fastify.get('/auth/providers', async () => ({
+    google: Boolean(fastify.googleOAuth2),
+    microsoft: Boolean(fastify.microsoftOAuth2),
+    magicLink: emailService.isAvailable(),
+  }))
+
   // ── OAuth: Google ────────────────────────────────────────────────────────────
 
   if (fastify.googleOAuth2) {
@@ -69,8 +75,12 @@ async function authRoutes(fastify) {
       return reply.code(400).send({ error: 'email_invalido' })
     }
 
+    if (!emailService.isAvailable()) {
+      return reply.code(503).send({ error: 'email_service_unavailable' })
+    }
+
     const token = await magicLinkStore.create({ email, purpose: 'login' })
-    await emailService.sendMagicLink({ to: email, token, purpose: 'login', frontendUrl: config.frontendUrl })
+    await emailService.sendMagicLink({ to: email, token, purpose: 'login', backendUrl: config.backendUrl })
 
     // Resposta genérica: não revelar se o email existe ou não
     return { ok: true }

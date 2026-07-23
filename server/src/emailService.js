@@ -15,8 +15,19 @@ class EmailService {
       : null
   }
 
-  async sendMagicLink({ to, token, purpose, frontendUrl }) {
-    const url = `${frontendUrl}/auth/magic-link/verify?token=${token}`
+  isAvailable() {
+    return this.transporter !== null
+  }
+
+  async sendMagicLink({ to, token, purpose, backendUrl }) {
+    if (!this.transporter) {
+      const error = new Error('email_service_unavailable')
+      error.statusCode = 503
+      throw error
+    }
+
+    const url = new URL('/auth/magic-link/verify', backendUrl)
+    url.searchParams.set('token', token)
     const isInvite = purpose === 'invite'
 
     const subject = isInvite
@@ -70,7 +81,7 @@ class EmailService {
         <!-- Footer -->
         <tr><td style="padding:16px 32px 28px;border-top:1px solid #f3f4f6">
           <p style="margin:0 0 6px;font-size:11px;color:#d1d5db;text-transform:uppercase;letter-spacing:0.08em">Link alternativo</p>
-          <p style="margin:0;font-size:11px;color:#9ca3af;word-break:break-all;line-height:1.5">${url}</p>
+          <p style="margin:0;font-size:11px;color:#9ca3af;word-break:break-all;line-height:1.5">${url.toString()}</p>
         </td></tr>
 
       </table>
@@ -81,11 +92,6 @@ class EmailService {
   </table>
 </body>
 </html>`
-
-    if (!this.transporter) {
-      console.log(`[EmailService] Magic link para ${to}:\n  ${url}`)
-      return
-    }
 
     await this.transporter.sendMail({
       from: this.config.smtpFrom,

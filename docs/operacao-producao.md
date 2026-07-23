@@ -31,6 +31,23 @@ Resultados esperados:
 
 O Render esta no plano Free. A primeira requisicao apos inatividade pode levar mais tempo devido a hibernacao do servico.
 
+## Autenticacao
+
+Antes de habilitar um metodo de entrada, configure suas credenciais no servico `empresafacil-api` do Render. O login consulta `GET /auth/providers` e exibe somente os metodos que a API declarou disponiveis.
+
+### Google OAuth
+
+No cliente OAuth **EmpresaFacil** do Google Cloud, mantenha estes URIs:
+
+- Origem JavaScript: `https://empresafacil.gersonvan.com.br`
+- Redirecionamento autorizado: `https://empresafacil-api.onrender.com/auth/google/callback`
+
+No Render, defina `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`. Nunca registre o segredo em arquivos, commits ou variaveis de frontend.
+
+### Link por e-mail
+
+No Render, defina `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` e `SMTP_FROM`. Sem SMTP, a API responde que o envio esta indisponivel e nao cria um token de acesso. O link enviado aponta para a API, que valida o token e redireciona para o frontend autenticado.
+
 ## Operacao de importacoes
 
 1. Escolha um perfil OFX nativo ou configure um perfil CSV da empresa ativa.

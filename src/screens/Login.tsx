@@ -1,10 +1,13 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL } from '../config'
 import styles from './Login.module.css'
 import { EFSymbol, EFWordmark } from '../components/EFLogo'
 
 type MagicLinkState = 'idle' | 'loading' | 'sent' | 'error'
+type AuthProviders = { google: boolean; microsoft: boolean; magicLink: boolean }
+
+const DEFAULT_PROVIDERS: AuthProviders = { google: false, microsoft: false, magicLink: false }
 
 function GoogleIcon() {
   return (
@@ -31,19 +34,52 @@ function MicrosoftIcon() {
 export default function Login() {
   const [email, setEmail] = useState('')
   const [magicState, setMagicState] = useState<MagicLinkState>('idle')
+  const [providers, setProviders] = useState<AuthProviders>(DEFAULT_PROVIDERS)
+  const [magicError, setMagicError] = useState('')
+
+  useEffect(() => {
+    async function loadProviders() {
+      try {
+        const response = await fetch(`${API_URL}/auth/providers`)
+        if (!response.ok) return
+        const next = await response.json() as Partial<AuthProviders>
+        setProviders({
+          google: next.google === true,
+          microsoft: next.microsoft === true,
+          magicLink: next.magicLink === true,
+        })
+      } catch {
+        // Sem resposta da API, os métodos ficam ocultos até ela se recuperar.
+      }
+    }
+
+    void loadProviders()
+  }, [])
 
   async function handleMagicLink(e: FormEvent) {
     e.preventDefault()
     if (!email.trim()) return
 
     setMagicState('loading')
+    setMagicError('')
     try {
       const res = await fetch(`${API_URL}/auth/magic-link/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
       })
-      setMagicState(res.ok ? 'sent' : 'error')
+      if (res.ok) {
+        setMagicState('sent')
+        return
+      }
+
+      const payload = await res.json().catch(() => null) as { error?: string } | null
+      setMagicError(
+        payload?.error === 'email_service_unavailable'
+          ? 'O envio de e-mail está temporariamente indisponível. Tente entrar com um provedor disponível ou fale com o suporte.'
+          : 'Falha ao enviar. Tente novamente.'
+      )
+      setMagicState('error')
     } catch {
       setMagicState('error')
     }
@@ -63,22 +99,22 @@ export default function Login() {
         <h1 className={styles.heading}>Bem-vindo de volta</h1>
         <p className={styles.sub}>Escolha como deseja entrar</p>
 
-        <div className={styles.oauthButtons}>
-          <a href={`${API_URL}/auth/google`} className={styles.oauthBtn}>
+        {(providers.google || providers.microsoft) ? <div className={styles.oauthButtons}>
+          {providers.google ? <a href={`${API_URL}/auth/google`} className={styles.oauthBtn}>
             <GoogleIcon />
             <span>Entrar com Google</span>
-          </a>
-          <a href={`${API_URL}/auth/microsoft`} className={styles.oauthBtn}>
+          </a> : null}
+          {providers.microsoft ? <a href={`${API_URL}/auth/microsoft`} className={styles.oauthBtn}>
             <MicrosoftIcon />
             <span>Entrar com Microsoft</span>
-          </a>
-        </div>
+          </a> : null}
+        </div> : null}
 
-        <div className={styles.divider}>
+        {(providers.google || providers.microsoft) && providers.magicLink ? <div className={styles.divider}>
           <span>ou continue por email</span>
-        </div>
+        </div> : null}
 
-        {magicState === 'sent' ? (
+        {providers.magicLink && magicState === 'sent' ? (
           <div className={styles.sentBox}>
             <div className={styles.sentIcon}>✉</div>
             <p className={styles.sentTitle}>Link enviado!</p>
@@ -89,12 +125,12 @@ export default function Login() {
             <button
               type="button"
               className={styles.backBtn}
-              onClick={() => { setMagicState('idle'); setEmail('') }}
+              onClick={() => { setMagicState('idle'); setEmail(''); setMagicError('') }}
             >
               Usar outro email
             </button>
           </div>
-        ) : (
+        ) : providers.magicLink ? (
           <form onSubmit={handleMagicLink} className={styles.form}>
             <label htmlFor="email" className={styles.label}>Email</label>
             <input
@@ -109,7 +145,7 @@ export default function Login() {
               disabled={magicState === 'loading'}
             />
             {magicState === 'error' ? (
-              <p className={styles.errorMsg}>Falha ao enviar. Tente novamente.</p>
+              <p className={styles.errorMsg}>{magicError || 'Falha ao enviar. Tente novamente.'}</p>
             ) : null}
             <button
               type="submit"
@@ -119,6 +155,8 @@ export default function Login() {
               {magicState === 'loading' ? 'Enviando…' : 'Enviar link de acesso'}
             </button>
           </form>
+        ) : (
+          <p className={styles.errorMsg}>Nenhuma forma de acesso está disponível no momento. Tente novamente em instantes ou fale com o suporte.</p>
         )}
         <p className={styles.legalLinks}>
           Ao entrar, você concorda com os{' '}
