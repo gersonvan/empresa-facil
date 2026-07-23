@@ -36,6 +36,113 @@
   display: none;
 }
 
+.profileBar,
+.profileForm,
+.actions {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profileBar {
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.profileLabel,
+.profileForm label {
+  display: grid;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profileLabel select,
+.profileForm input,
+.profileForm select,
+.categorySelect {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  padding: 7px 8px;
+}
+
+.profileLabel select {
+  min-width: 220px;
+}
+
+.profileForm {
+  padding: 12px;
+  margin: 0 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface-soft);
+}
+
+.profileForm > input {
+  min-width: 180px;
+}
+
+.profileForm label input[type='number'] {
+  width: 72px;
+}
+
+.checkboxLabel {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 0;
+}
+
+.memoryHint,
+.error {
+  margin: 12px 0 0;
+  font-size: 12px;
+}
+
+.memoryHint { color: var(--color-text-secondary); }
+.error { color: var(--color-negative); font-weight: 600; }
+
+.memoryPanel {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  margin: 0 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+}
+
+.memoryPanel p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.memoryRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(140px, 220px) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.memoryRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.memoryRow small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
 .banks {
   margin: 0;
   padding: 0;
@@ -282,4 +389,38 @@
 .categoryEmpty {
   font-size: 12px;
   color: var(--color-text-tertiary);
+}
+
+.categorySelect {
+  max-width: 180px;
+  font-size: 12px;
+}
+
+.suggestion {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .profileLabel,
+  .profileLabel select,
+  .profileForm > input {
+    width: 100%;
+  }
+
+  .profileBar {
+    align-items: stretch;
+  }
+
+  .categorySelect {
+    max-width: 150px;
+  }
+
+  .memoryRow {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
 }
