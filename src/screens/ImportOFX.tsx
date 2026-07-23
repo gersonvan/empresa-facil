@@ -11,6 +11,7 @@ import type { OFXTransaction } from '../lib/parseOFX'
 import { suggestCategory } from '../lib/categorizeOFX'
 import { deleteImportProfile, listImportProfiles, saveImportProfile, type ImportProfile } from '../importProfileStore'
 import { findTransactionMemory, listTransactionMemory, rememberTransactionCategory, removeTransactionMemory, type TransactionMemory } from '../transactionMemoryStore'
+import { findPossibleInternalTransfers } from '../importReconciliation'
 import styles from './ImportOFX.module.css'
 
 interface ImportRow extends OFXTransaction {
@@ -22,6 +23,7 @@ interface ImportRow extends OFXTransaction {
   categoryName: string
   dreGroup: DreGroup
   suggestionSource: 'memory' | 'rule' | 'none'
+  reconciliationReason?: string
 }
 
 const NEW_PROFILE: Omit<ImportProfile, 'id' | 'companyId' | 'createdAt' | 'updatedAt' | 'builtIn'> = {
@@ -82,7 +84,7 @@ export default function ImportOFX() {
     return { categoryId: '', categoryName: 'Sem categoria', dreGroup: transaction.type === 'Entrada' ? 'revenue' as const : 'expenses' as const, suggestionSource: 'none' as const }
   }
 
-  function rowFromTransaction(transaction: OFXTransaction, duplicates: Set<string>): ImportRow {
+  function rowFromTransaction(transaction: OFXTransaction, duplicates: Set<string>, reconciliationReasons: Map<string, string>): ImportRow {
     const costType = 'company'
     return {
       ...transaction,
@@ -90,6 +92,7 @@ export default function ImportOFX() {
       costType,
       description: transaction.description,
       isDuplicate: duplicates.has(buildDuplicateKey(transaction.month, transaction.description, transaction.amount)),
+      reconciliationReason: reconciliationReasons.get(transaction.id),
       ...categoryFor(transaction, costType),
     }
   }
@@ -107,7 +110,8 @@ export default function ImportOFX() {
         return
       }
       const duplicates = buildDuplicateSet()
-      setRows(transactions.map((transaction) => rowFromTransaction(transaction, duplicates)))
+      const reconciliationReasons = new Map(findPossibleInternalTransfers(transactions).map((item) => [item.transactionId, item.reason]))
+      setRows(transactions.map((transaction) => rowFromTransaction(transaction, duplicates, reconciliationReasons)))
     } catch {
       setParseError('Não foi possível processar o arquivo. Revise o perfil de importação e tente novamente.')
     }
@@ -194,6 +198,10 @@ export default function ImportOFX() {
         amount: row.amount,
         createdAt: now,
         flaggedForReview: true,
+        sourceType: 'bank_import',
+        reviewStatus: 'suggested',
+        reconciliationStatus: row.reconciliationReason ? 'pending' : 'not_applicable',
+        reconciliationReason: row.reconciliationReason,
       })
       if (row.categoryId) {
         rememberTransactionCategory({
@@ -218,7 +226,7 @@ export default function ImportOFX() {
     return <ScreenContainer title="Importar extrato"><Card className={styles.successCard}>
       <div className={styles.successIcon}>✅</div><h2 className={styles.successTitle}>{result.novos} lançamento{result.novos !== 1 ? 's' : ''} importado{result.novos !== 1 ? 's' : ''}</h2>
       <p className={styles.successDetail}>{result.memorizados} categoria{result.memorizados !== 1 ? 's' : ''} confirmada{result.memorizados !== 1 ? 's' : ''} na memória desta empresa. Revise os lançamentos antes de fechar o mês.{result.duplicados > 0 ? ` ${result.duplicados} duplicata${result.duplicados !== 1 ? 's foram' : ' foi'} ignorada${result.duplicados !== 1 ? 's' : ''}.` : ''}</p>
-      <div className={styles.successActions}><Button onClick={() => navigate('/records')}>Ver registros</Button><Button variant="secondary" onClick={() => setResult(null)}>Importar outro arquivo</Button></div>
+      <div className={styles.successActions}><Button onClick={() => navigate('/import-review')}>Revisar importados</Button><Button variant="secondary" onClick={() => setResult(null)}>Importar outro arquivo</Button></div>
     </Card></ScreenContainer>
   }
 
@@ -251,7 +259,7 @@ export default function ImportOFX() {
       {parseError ? <p className={styles.error}>{parseError}</p> : null}
     </Card> : <Card>
       <div className={styles.previewHeader}><h2 className={styles.previewTitle}>{rows.length} transaç{rows.length === 1 ? 'ão encontrada' : 'ões encontradas'}</h2><div className={styles.bulkActions}><span className={styles.bulkLabel}>Selecionados:</span><Button size="sm" variant="secondary" onClick={() => setBulkCostType('company')} disabled={!someSelected}>Empresa</Button><Button size="sm" variant="secondary" onClick={() => setBulkCostType('personal')} disabled={!someSelected}>Pessoal</Button></div></div>
-      <div className={styles.tableWrapper}><table className={styles.table}><thead><tr><th><input type="checkbox" checked={allSelected} onChange={(event) => toggleAll(event.target.checked)} title="Selecionar todos" /></th><th>Data</th><th>Descrição</th><th>Valor</th><th>Escopo</th><th>Categoria</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className={`${!row.selected ? styles.rowDisabled : ''} ${row.isDuplicate ? styles.rowDuplicate : ''}`}><td><input type="checkbox" checked={row.selected} disabled={row.isDuplicate} onChange={(event) => updateRow(row.id, { selected: event.target.checked })} /></td><td className={styles.date}>{formatDate(row.date)}</td><td>{row.isDuplicate ? <span>{row.description} <span className={styles.dupBadge}>duplicado</span></span> : <input className={styles.descInput} value={row.description} onChange={(event) => updateRow(row.id, { description: event.target.value })} />}</td><td className={`${styles.amount} ${row.type === 'Entrada' ? styles.entrada : styles.saida}`}>{row.type === 'Saída' ? '−' : '+'}{formatCurrency(row.amount)}</td><td>{!row.isDuplicate ? <div className={styles.costToggle}><button type="button" className={`${styles.costBtn} ${row.costType === 'company' ? styles.active : ''}`} onClick={() => updateCostType(row, 'company')}>Empresa</button><button type="button" className={`${styles.costBtn} ${row.costType === 'personal' ? styles.active : ''}`} onClick={() => updateCostType(row, 'personal')}>Pessoal</button></div> : null}</td><td>{!row.isDuplicate ? <><select className={styles.categorySelect} value={row.categoryId} onChange={(event) => updateCategory(row, event.target.value)}><option value="">Sem categoria</option>{categoryOptions.filter((category) => category.costType === row.costType).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>{row.suggestionSource !== 'none' ? <small className={styles.suggestion}>{row.suggestionSource === 'memory' ? 'Memória' : 'Regra'}</small> : null}</> : null}</td></tr>)}</tbody></table></div>
+      <div className={styles.tableWrapper}><table className={styles.table}><thead><tr><th><input type="checkbox" checked={allSelected} onChange={(event) => toggleAll(event.target.checked)} title="Selecionar todos" /></th><th>Data</th><th>Descrição</th><th>Valor</th><th>Escopo</th><th>Categoria</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className={`${!row.selected ? styles.rowDisabled : ''} ${row.isDuplicate ? styles.rowDuplicate : ''}`}><td><input type="checkbox" checked={row.selected} disabled={row.isDuplicate} onChange={(event) => updateRow(row.id, { selected: event.target.checked })} /></td><td className={styles.date}>{formatDate(row.date)}</td><td>{row.isDuplicate ? <span>{row.description} <span className={styles.dupBadge}>duplicado</span></span> : <><input className={styles.descInput} value={row.description} onChange={(event) => updateRow(row.id, { description: event.target.value })} />{row.reconciliationReason ? <small className={styles.reconciliationWarning}>{row.reconciliationReason}</small> : null}</>}</td><td className={`${styles.amount} ${row.type === 'Entrada' ? styles.entrada : styles.saida}`}>{row.type === 'Saída' ? '−' : '+'}{formatCurrency(row.amount)}</td><td>{!row.isDuplicate ? <div className={styles.costToggle}><button type="button" className={`${styles.costBtn} ${row.costType === 'company' ? styles.active : ''}`} onClick={() => updateCostType(row, 'company')}>Empresa</button><button type="button" className={`${styles.costBtn} ${row.costType === 'personal' ? styles.active : ''}`} onClick={() => updateCostType(row, 'personal')}>Pessoal</button></div> : null}</td><td>{!row.isDuplicate ? <><select className={styles.categorySelect} value={row.categoryId} onChange={(event) => updateCategory(row, event.target.value)}><option value="">Sem categoria</option>{categoryOptions.filter((category) => category.costType === row.costType).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>{row.suggestionSource !== 'none' ? <small className={styles.suggestion}>{row.suggestionSource === 'memory' ? 'Memória' : 'Regra'}</small> : null}</> : null}</td></tr>)}</tbody></table></div>
       <div className={styles.footer}><span className={styles.footerInfo}>{selectedCount} lançamento{selectedCount !== 1 ? 's' : ''} para importar</span><div className={styles.actions}><Button variant="secondary" onClick={() => setRows(null)}>Cancelar</Button><Button onClick={doImport} disabled={selectedCount === 0 || importing}>{importing ? 'Importando…' : `Importar ${selectedCount} lançamento${selectedCount !== 1 ? 's' : ''}`}</Button></div></div>
     </Card>}
   </ScreenContainer>

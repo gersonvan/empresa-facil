@@ -1,0 +1,17 @@
+.monthNav { margin-bottom: 12px; }
+.summaryCard { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; }
+.summaryCard > div { display: grid; gap: 3px; min-width: 115px; }
+.summaryCard span, .itemMain span, .itemMain small { color: var(--color-text-secondary); font-size: 12px; }
+.summaryCard strong { font-size: 17px; color: var(--color-text-primary); }
+.explanation, .message { margin: 0 0 12px; font-size: 13px; color: var(--color-text-secondary); }
+.message { color: var(--color-accent); font-weight: 700; }
+.list { display: grid; gap: 8px; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; }
+.itemMain { display: grid; gap: 3px; min-width: 0; }
+.itemMain strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.itemMain small { color: #a16207; font-weight: 700; }
+.positive { color: var(--color-positive); white-space: nowrap; }
+.negative { color: var(--color-negative); white-space: nowrap; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.empty { margin: 0; color: var(--color-text-secondary); }
+@media (max-width: 640px) { .item { grid-template-columns: 1fr; gap: 8px; } .actions { justify-content: flex-start; } }

@@ -14,6 +14,7 @@ import Companies from './screens/Companies'
 import TaxProfileSettings from './screens/TaxProfileSettings'
 import Members from './screens/Members'
 import ImportOFX from './screens/ImportOFX'
+import ImportReview from './screens/ImportReview'
 
 export default function AppRouter() {
   return (
@@ -22,6 +23,7 @@ export default function AppRouter() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/launch" element={<Launch />} />
       <Route path="/import-ofx" element={<ImportOFX />} />
+      <Route path="/import-review" element={<ImportReview />} />
       <Route path="/dre" element={<DRE />} />
       <Route path="/records" element={<Records />} />
       <Route path="/companies" element={<Companies />} />

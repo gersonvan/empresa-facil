@@ -19,6 +19,7 @@ A camada de apresentacao usa renderizacao no cliente: o ponto de entrada monta a
 | `/dashboard` | Dashboard | Sim | `src/router.tsx:22` |
 | `/launch` | Lancar | Sim | `src/router.tsx:23` |
 | `/import-ofx` | Importacao de OFX/CSV, perfis bancarios e memoria de categorizacao | Sim | `src/router.tsx:24`; `src/screens/ImportOFX.tsx` |
+| `/import-review` | Fila mensal para aprovar importados ou excluir transferencias internas da DRE | Sim | `src/router.tsx`; `src/screens/ImportReview.tsx` |
 | `/dre` | DRE | Sim | `src/router.tsx:25` |
 | `/records` | Registros | Sim | `src/router.tsx:26` |
 | `/companies` | Empresas | Sim | `src/router.tsx:27` |
@@ -42,7 +43,7 @@ A camada de apresentacao usa renderizacao no cliente: o ponto de entrada monta a
 
 ## Padrao de gerencia de estado
 
-O frontend usa combinacao de estado local em `localStorage`, stores por dominio e chamadas HTTP manuais. O token fica em `src/authStore.ts:3-16`; empresas usam `localStorage` e evento de empresa ativa (`src/companyStore.ts:21-86`; `src/companyStore.ts:498`); ciclo mensal usa storage local (`src/monthLifecycle.js:22-31`). Os perfis de importacao e a memoria de categorizacao tambem sao separados por `companyId` no armazenamento local (`src/importProfileStore.ts`; `src/transactionMemoryStore.ts`).
+O frontend usa combinacao de estado local em `localStorage`, stores por dominio e chamadas HTTP manuais. O token fica em `src/authStore.ts:3-16`; empresas usam `localStorage` e evento de empresa ativa (`src/companyStore.ts:21-86`; `src/companyStore.ts:498`); ciclo mensal usa storage local (`src/monthLifecycle.js:22-31`). Os perfis de importacao, memoria de categorizacao e historico de revisao tambem sao separados por `companyId` no armazenamento local e incluidos na fila de snapshots do `syncClient`, que os persiste no event store do backend (`src/importProfileStore.ts`; `src/transactionMemoryStore.ts`; `src/launchReviewHistoryStore.ts`; `src/syncClient.ts`).
 
 ## Integracao com a interface externa
 

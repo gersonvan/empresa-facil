@@ -21,6 +21,9 @@ const SYNC_KEYS = new Set([
   'empresa-facil:commitments-history:v1',
   'empresa-facil:deduction-brackets:v1',
   'empresa-facil:plan-of-accounts:v1',
+  'empresa-facil:import-profiles:v1',
+  'empresa-facil:transaction-memory:v1',
+  'empresa-facil:launch-review-history:v1',
 ])
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────

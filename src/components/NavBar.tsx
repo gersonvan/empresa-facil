@@ -17,6 +17,7 @@ const navItems = [
   { path: '/dashboard', label: 'Início' },
   { path: '/launch', label: 'Lançar' },
   { path: '/import-ofx', label: 'Importar' },
+  { path: '/import-review', label: 'Revisar importados' },
   { path: '/records', label: 'Registros' },
   { path: '/category-insights', label: 'Análise' },
   { path: '/deduction-review', label: 'Impostos' },

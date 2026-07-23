@@ -10,7 +10,7 @@ O sistema centraliza lancamentos, empresas, DRE, revisao mensal, importacao de e
 
 Dentro do escopo:
 
-- Interface web autenticada com dashboard, lancamentos, importacao OFX/CSV com perfis bancarios e memoria de categorizacao por empresa, DRE, registros, empresas, perfil tributario, membros, categorias, plano de contas, insights, previsao de caixa, revisao de deducoes, fechamento mensal e treinamento (`src/router.tsx:21-36`; `src/screens/ImportOFX.tsx`).
+- Interface web autenticada com dashboard, lancamentos, importacao OFX/CSV com perfis bancarios e memoria de categorizacao por empresa, conciliacao assistida de transferencias, fila de revisao de importados, DRE, registros, empresas, perfil tributario, membros, categorias, plano de contas, insights, previsao de caixa, revisao de deducoes, fechamento mensal e treinamento (`src/router.tsx`; `src/screens/ImportOFX.tsx`; `src/screens/ImportReview.tsx`).
 - Area administrativa para estatisticas, empresas e usuarios (`src/App.tsx:24-53`; `server/src/routes/admin.js:8-165`).
 - Backend HTTP com healthcheck, autenticacao, onboarding, membros, sincronizacao, backup, admin e billing (`server/src/app.js:57-64`).
 - Persistencia relacional por migrations SQL (`server/migrations/001_init.sql:1`, `server/migrations/002_auth.sql:1`, `server/migrations/003_saas_base.sql:9`).

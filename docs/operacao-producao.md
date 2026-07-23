@@ -31,6 +31,14 @@ Resultados esperados:
 
 O Render esta no plano Free. A primeira requisicao apos inatividade pode levar mais tempo devido a hibernacao do servico.
 
+## Operacao de importacoes
+
+1. Escolha um perfil OFX nativo ou configure um perfil CSV da empresa ativa.
+2. Revise a previa e importe os itens desejados; cada item fica pendente de revisao.
+3. Em **Revisar importados**, aprove operacoes normais ou marque somente transferencias internas confirmadas. A segunda decisao exclui o item da DRE e registra o historico.
+
+Perfis, memoria de categorizacao e decisoes de revisao sao sincronizados pelo mesmo event store dos demais dados financeiros. A deteccao de transferencia e apenas um alerta: nunca exclui um lancamento automaticamente.
+
 ## Incidente e reversao
 
 Nao exclua recursos no GCP sem uma decisao explicita de descarte. O ambiente anterior permanece como alternativa de retorno:

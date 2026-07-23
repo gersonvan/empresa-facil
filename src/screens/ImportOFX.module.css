@@ -404,6 +404,14 @@
   font-weight: 700;
 }
 
+.reconciliationWarning {
+  display: block;
+  margin: 4px 0 0;
+  color: #a16207;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .profileLabel,
   .profileLabel select,
