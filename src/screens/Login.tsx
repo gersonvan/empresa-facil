@@ -155,9 +155,9 @@ export default function Login() {
               {magicState === 'loading' ? 'Enviando…' : 'Enviar link de acesso'}
             </button>
           </form>
-        ) : (
+        ) : !providers.google && !providers.microsoft ? (
           <p className={styles.errorMsg}>Nenhuma forma de acesso está disponível no momento. Tente novamente em instantes ou fale com o suporte.</p>
-        )}
+        ) : null}
         <p className={styles.legalLinks}>
           Ao entrar, você concorda com os{' '}
           <Link to="/termos">Termos de Uso</Link> e a{' '}
